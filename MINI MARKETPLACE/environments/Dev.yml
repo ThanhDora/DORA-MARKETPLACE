@@ -1,4 +1,0 @@
-name: Dev
-variables:
-  - secret: true
-    name: API
