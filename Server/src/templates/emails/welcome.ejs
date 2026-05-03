@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chào mừng đến với Mini Marketplace</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .email-header .icon {
+      font-size: 72px;
+      margin-bottom: 20px;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 32px;
+      margin: 0;
+      font-weight: 700;
+    }
+    .email-body {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 20px;
+      color: #1f2937;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .message {
+      font-size: 16px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .features {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .features h3 {
+      margin: 0 0 16px 0;
+      color: #1f2937;
+      font-size: 18px;
+    }
+    .features ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .features li {
+      padding: 10px 0;
+      color: #4b5563;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .features li .icon {
+      font-size: 20px;
+      margin-right: 12px;
+      width: 32px;
+    }
+    .cta-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .cta {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 16px 48px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+    .footer {
+      background: #f9fafb;
+      padding: 24px 40px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      margin: 0;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .social-links {
+      margin-top: 16px;
+    }
+    .social-links a {
+      display: inline-block;
+      margin: 0 8px;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <div class="icon">🎉</div>
+      <h1>Chào mừng!</h1>
+    </div>
+    
+    <div class="email-body">
+      <p class="greeting">Xin chào <%= name %>,</p>
+      
+      <p class="message">
+        Cảm ơn bạn đã xác minh email thành công! Tài khoản của bạn đã sẵn sàng để sử dụng.
+      </p>
+
+      <div class="features">
+        <h3>🚀 Bạn có thể làm gì?</h3>
+        <ul>
+          <li><span class="icon">🛒</span> Mua sắm hàng ngàn sản phẩm từ các Seller uy tín</li>
+          <li><span class="icon">💰</span> Tiết kiệm với các ưu đãi và khuyến mãi hấp dẫn</li>
+          <li><span class="icon">📱</span> Theo dõi đơn hàng dễ dàng</li>
+          <li><span class="icon">❤️</span> Lưu sản phẩm yêu thích vào wishlist</li>
+          <li><span class="icon">🏪</span> Trở thành Seller để bán hàng online</li>
+        </ul>
+      </div>
+
+      <div class="cta-container">
+        <a href="<%= typeof homeUrl !== 'undefined' ? homeUrl : '/' %>" class="cta">Bắt đầu mua sắm</a>
+      </div>
+
+      <p class="message" style="text-align: center; color: #6b7280;">
+        Nếu bạn có bất kỳ câu hỏi nào, đừng ngần ngại liên hệ với chúng tôi.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Mini Marketplace - Mua sắm thông minh, tiết kiệm chi phí</p>
+      <p>© 2024 Mini Marketplace. Tất cả quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+</html>

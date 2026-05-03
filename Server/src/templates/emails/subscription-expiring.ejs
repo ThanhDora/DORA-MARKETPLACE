@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription sắp hết hạn</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      padding: 40px;
+      text-align: center;
+    }
+    .email-header .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 28px;
+      margin: 0;
+      font-weight: 600;
+    }
+    .email-body {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 18px;
+      color: #1f2937;
+      margin-bottom: 24px;
+    }
+    .message {
+      font-size: 16px;
+      color: #4b5563;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .subscription-card {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border: 2px solid #fdba74;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .subscription-card .plan-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #c2410c;
+      margin-bottom: 8px;
+    }
+    .subscription-card .days-left {
+      font-size: 48px;
+      font-weight: 700;
+      color: #ea580c;
+      margin: 16px 0;
+    }
+    .subscription-card .days-label {
+      font-size: 16px;
+      color: #9a3412;
+    }
+    .warning-box {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .warning-box p {
+      margin: 8px 0;
+      font-size: 14px;
+      color: #9a3412;
+    }
+    .warning-box strong {
+      color: #c2410c;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 16px 40px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+    }
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+    .features {
+      margin: 24px 0;
+    }
+    .features h3 {
+      color: #1f2937;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    .features ul {
+      list-style: none;
+      padding: 0;
+    }
+    .features li {
+      padding: 8px 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+    .features li::before {
+      content: '✓ ';
+      color: #10b981;
+      font-weight: bold;
+    }
+    .footer {
+      background: #f9fafb;
+      padding: 24px 40px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      margin: 0;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <div class="icon">⏰</div>
+      <h1>Subscription sắp hết hạn</h1>
+    </div>
+    
+    <div class="email-body">
+      <p class="greeting">Xin chào <%= name %>,</p>
+      
+      <p class="message">
+        Subscription "<strong><%= planName %></strong>" của bạn sắp hết hạn.
+        Hãy gia hạn để tiếp tục sử dụng các tính năng dành cho Seller.
+      </p>
+
+      <div class="subscription-card">
+        <div class="plan-name"><%= planName %></div>
+        <div class="days-left"><%= daysLeft %></div>
+        <div class="days-label">ngày còn lại</div>
+      </div>
+
+      <div class="warning-box">
+        <p><strong>⚠️ Lưu ý:</strong></p>
+        <p>• Sau khi hết hạn, bạn sẽ không thể đăng bán sản phẩm mới</p>
+        <p>• Các sản phẩm hiện tại sẽ bị ẩn khỏi trang tìm kiếm</p>
+        <p>• Thông tin và đơn hàng của bạn vẫn được lưu trữ</p>
+      </div>
+
+      <div class="button-container">
+        <a href="<%= typeof renewUrl !== 'undefined' ? renewUrl : '/subscriptions' %>" class="button">Gia hạn ngay</a>
+      </div>
+
+      <p class="message" style="text-align: center; font-size: 14px; color: #6b7280;">
+        Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Mini Marketplace - Nền tảng bán hàng uy tín</p>
+      <p>© 2024 Mini Marketplace. Tất cả quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+</html>

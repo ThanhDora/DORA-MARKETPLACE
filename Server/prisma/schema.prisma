@@ -1,0 +1,474 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum ProductType {
+  ACCOUNT
+  KEY
+  FILE
+}
+
+enum ProductStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  PAID
+  FAILED
+  DELIVERING
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  PLATFORM
+  MOMO
+  VNPAY
+  SEPAY
+  PAYPAL
+  BANK_TRANSFER
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum TransactionType {
+  DEPOSIT
+  PAYMENT
+  REFUND
+  SELLER_REVENUE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id                       Int       @id @default(autoincrement())
+  name                     String
+  email                    String    @unique
+  password                 String?
+  avatar                   String?
+  phone                    String?
+  bio                      String?
+  address                  String?
+  role                     Role       @default(USER)
+  balance                  Decimal    @default(0) @db.Decimal(10, 2)
+  isActive                 Boolean    @default(true)
+  isEmailVerified          Boolean    @default(false)
+  emailVerificationToken   String?
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  oauthAccounts        OAuthAccount[]
+  refreshTokens        RefreshToken[]
+  subscription         SellerSubscription[]
+  products             Product[]
+  orders               Order[]
+  orderItems           OrderItem[]       @relation("SellerOrders")
+  receivedMessages     Message[]         @relation("ReceivedMessages")
+  cartItems            CartItem[]
+  wishlists            Wishlist[]
+  reviews              Review[]
+  messages             Message[]         @relation("SentMessages")
+  aiSessions           AIChatSession[]
+  payouts              Payout[]
+  walletTransactions   WalletTransaction[]
+  paymentConfigs        SellerPaymentConfig[]
+  notifications         Notification[]
+  activityLogs          ActivityLog[]
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+}
+
+model OAuthAccount {
+  id               Int       @id @default(autoincrement())
+  userId          Int
+  provider         String
+  providerUserId   String
+  accessToken     String?
+  refreshToken     String?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([provider, userId])
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  token     String    @unique
+  expiresAt DateTime
+  isValid   Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model SubscriptionPlan {
+  id            Int       @id @default(autoincrement())
+  name          String
+  description   String?
+  price         Decimal   @db.Decimal(10, 2)
+  durationDays  Int
+  maxProducts   Int?
+  features      Json?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subscriptions SellerSubscription[]
+
+  @@index([isActive])
+  @@index([price])
+}
+
+model SellerSubscription {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  planId    Int
+  status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime          @default(now())
+  endDate   DateTime
+  autoRenew Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan  @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+  @@index([endDate])
+}
+
+model SellerPaymentConfig {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  method    PaymentMethod
+  config    Json
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, method])
+  @@index([userId])
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  icon        String?
+  parentId    Int?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products     Product[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  slug        String        @unique
+  description String?
+  price       Decimal        @db.Decimal(10, 2)
+  images      Json          @default("[]")
+  type        ProductType  @default(ACCOUNT)
+  stock       Int           @default(1)
+  status      ProductStatus @default(PENDING)
+  approvedAt  DateTime?
+  approvedBy  Int?
+  metadata    Json          @default("{}")
+  viewCount   Int           @default(0)
+  soldCount   Int           @default(0)
+  sellerId    Int
+  categoryId  Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  seller      User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  files       ProductFile[]
+  cartItems   CartItem[]
+  wishlists   Wishlist[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([slug])
+  @@index([price])
+  @@index([createdAt])
+}
+
+model ProductFile {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  downloadUrl String
+  createdAt   DateTime @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Order {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  totalAmount   Decimal         @db.Decimal(10, 2)
+  platformFee   Decimal         @db.Decimal(10, 2) @default(0)
+  paymentMethod PaymentMethod   @default(PLATFORM)
+  status        OrderStatus    @default(PENDING)
+  metadata      Json           @default("{}")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items         OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                 Int      @id @default(autoincrement())
+  orderId            Int
+  productId           Int
+  sellerId            Int?
+  quantity            Int
+  price               Decimal  @db.Decimal(10, 2)
+  sellerPayoutAmount  Decimal  @db.Decimal(10, 2)
+  deliveryData        Json?
+  createdAt           DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  seller  User?   @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  @@index([orderId])
+  @@index([sellerId])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([rating])
+}
+
+model Message {
+  id         Int       @id @default(autoincrement())
+  roomId     String
+  senderId   Int?
+  receiverId Int?
+  sessionId  Int?
+  content    String
+  role       String    @default("user")
+  isRead     Boolean   @default(false)
+  metadata   Json      @default("{}")
+  createdAt  DateTime  @default(now())
+
+  sender     User?          @relation("SentMessages", fields: [senderId], references: [id], onDelete: SetNull)
+  receiver   User?          @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: SetNull)
+  session    AIChatSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([sessionId])
+}
+
+model AIChatSession {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  title     String
+  context   String    @default("default")
+  metadata  Json      @default("{}")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model AIPromptTemplate {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  content   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payout {
+  id            Int          @id @default(autoincrement())
+  userId        Int
+  amount        Decimal       @db.Decimal(10, 2)
+  bankAccount   String
+  bankName      String
+  accountHolder String
+  status        PayoutStatus @default(PENDING)
+  transactionId String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model WalletTransaction {
+  id            Int               @id @default(autoincrement())
+  userId        Int
+  amount        Decimal           @db.Decimal(10, 2)
+  type          TransactionType
+  status        TransactionStatus @default(PENDING)
+  paymentMethod PaymentMethod?
+  referenceId   String?
+  description   String?
+  metadata      Json              @default("{}")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  type      String   @default("GENERAL")
+  metadata  Json     @default("{}")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id        Int       @id @default(autoincrement())
+  userId    Int?
+  action    String
+  entity    String?
+  entityId  Int?
+  metadata  Json      @default("{}")
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}

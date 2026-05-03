@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông báo đăng nhập</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .email-header .icon {
+      font-size: 72px;
+      margin-bottom: 20px;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 32px;
+      margin: 0;
+      font-weight: 700;
+    }
+    .email-body {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 20px;
+      color: #1f2937;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .message {
+      font-size: 16px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .info-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #d1fae5;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .info-value {
+      color: #1f2937;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .warning {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .warning-title {
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+    .warning-text {
+      color: #a16207;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .footer {
+      background: #f9fafb;
+      padding: 24px 40px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      margin: 0;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .btn {
+      display: inline-block;
+      background: #dc2626;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <div class="icon">🔐</div>
+      <h1>Đăng nhập mới</h1>
+    </div>
+    
+    <div class="email-body">
+      <p class="greeting">Xin chào <%= name %>,</p>
+      
+      <p class="message">
+        Chúng tôi phát hiện một đăng nhập mới vào tài khoản của bạn:
+      </p>
+
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">⏰ Thời gian</span>
+          <span class="info-value"><%= loginTime %></span>
+        </div>
+        <% if (ipAddress) { %>
+        <div class="info-row">
+          <span class="info-label">🌐 Địa chỉ IP</span>
+          <span class="info-value"><%= ipAddress %></span>
+        </div>
+        <% } %>
+        <% if (deviceInfo) { %>
+        <div class="info-row">
+          <span class="info-label">📱 Thiết bị</span>
+          <span class="info-value"><%= deviceInfo %></span>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="warning">
+        <div class="warning-title">⚠️ Không phải bạn?</div>
+        <div class="warning-text">
+          Nếu bạn không thực hiện đăng nhập này, có thể ai đó đang cố truy cập tài khoản của bạn. 
+          Vui lòng đổi mật khẩu ngay lập tức để bảo vệ tài khoản của bạn.
+        </div>
+      </div>
+
+      <p class="message" style="text-align: center;">
+        Nếu đó là bạn, bạn có thể bỏ qua email này một cách an toàn.
+      </p>
+
+      <p style="text-align: center;">
+        <a href="<%= typeof homeUrl !== 'undefined' ? homeUrl : '/' %>" class="btn">Đổi mật khẩu ngay</a>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Email này được gửi tự động vì mục đích bảo mật.</p>
+      <p>Mini Marketplace - Mua sắm thông minh, tiết kiệm chi phí</p>
+      <p>© 2024 Mini Marketplace. Tất cả quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+</html>

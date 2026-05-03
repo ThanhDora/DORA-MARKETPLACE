@@ -1,0 +1,29 @@
+node_modules/
+.next/
+*.tsbuildinfo
+out/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Claude
+.claude/
+
+# Server uploads
+Server/uploads/*
+!Server/uploads/.gitkeep

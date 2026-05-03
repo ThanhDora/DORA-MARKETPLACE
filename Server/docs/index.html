@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Marketplace API Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- LAYOUT WRAPPER -->
+  <div class="layout-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
+            <path d="M7 10h14M7 14h8M7 18h11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-name">Mini Marketplace</span>
+          <span class="logo-version">v1.0.0</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search endpoints..." autocomplete="off">
+      <kbd>⌘K</kbd>
+    </div>
+
+    <nav class="nav-groups" id="navGroups">
+      <div class="nav-group">
+        <div class="nav-group-label">
+          <span>Getting Started</span>
+        </div>
+        <a href="#overview" class="nav-item active" data-section="overview">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Overview
+        </a>
+        <a href="#authentication" class="nav-item" data-section="authentication">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Authentication
+        </a>
+        <a href="#errors" class="nav-item" data-section="errors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Errors
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="api-badge">
+        <span class="pulse"></span>
+        84 Endpoints
+      </span>
+    </div>
+  </aside>
+
+  <!-- MOBILE HEADER -->
+  <header class="mobile-header">
+    <button class="menu-btn" id="menuBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="mobile-logo">
+      <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="url(#logoGrad2)"/><path d="M7 10h14M7 14h8M7 18h11" stroke="white" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="logoGrad2" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs></svg>
+      <span>API Docs</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle2">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        REST API v1.0.0
+      </div>
+      <h1 class="hero-title">Mini Marketplace</h1>
+      <h2 class="hero-subtitle">API Documentation</h2>
+      <p class="hero-desc">Complete API reference for building applications on Mini Marketplace platform. Covers authentication, products, orders, payments, subscriptions, chat, and more.</p>
+      <div class="hero-actions">
+        <a href="#overview" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Get Started
+        </a>
+          <a href="/api" class="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Try it Live
+          </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">84</span>
+          <span class="stat-label">Endpoints</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">13</span>
+          <span class="stat-label">Resource Groups</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">JWT</span>
+          <span class="stat-label">Auth Type</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">REST</span>
+          <span class="stat-label">Architecture</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BASE URL -->
+    <section class="content-section" id="baseurl">
+      <div class="endpoint-card full">
+        <div class="endpoint-header">
+          <span class="method method-get">BASE URL</span>
+          <code class="base-url">http://localhost:3000/api</code>
+          <button class="copy-btn" data-copy="http://localhost:3000/api" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- OVERVIEW -->
+    <section class="content-section" id="overview">
+      <div class="section-header">
+        <span class="section-number">01</span>
+        <div>
+          <h2 class="section-title">Overview</h2>
+          <p class="section-desc">Mini Marketplace API cung cấp RESTful interface để tương tác với nền tảng thương mại điện tử. Hỗ trợ bán tài khoản game, key phần mềm, và file số.</p>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon" style="background: rgba(99,102,241,0.1); color: #6366F1;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <h3>REST Architecture</h3>
+          <p>API tuân thủ REST conventions với HTTP methods chuẩn: GET, POST, PUT, PATCH, DELETE.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon" style="background: rgba(16,185,129,0.1); color: #10B981;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>JWT Authentication</h3>
+          <p>Access token (15 phút) trong Authorization header. Refresh token (7 ngày) trong HttpOnly cookie.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon" style="background: rgba(245,158,11,0.1); color: #F59E0B;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Rate Limiting</h3>
+          <p>authLimiter: 10 req/15 phút. strictLimiter: 5 req/15 phút. Default: 100 req/15 phút.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon" style="background: rgba(239,68,68,0.1); color: #EF4444;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Email Notifications</h3>
+          <p>Tự động gửi email thông báo: login alert, welcome, verify email, password reset.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Standard Response Format</h3>
+        <div class="tabs">
+          <button class="tab active" data-tab="res-success">Success</button>
+          <button class="tab" data-tab="res-error">Error</button>
+          <button class="tab" data-tab="res-pagination">Pagination</button>
+        </div>
+        <div class="tab-content active" id="res-success">
+          <div class="json-block">
+<pre><code>{
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Thành công"</span>,
+  <span class="json-key">"data"</span>: { ... }
+}</code></pre>
+          </div>
+        </div>
+        <div class="tab-content" id="res-error">
+          <div class="json-block">
+<pre><code>{
+  <span class="json-key">"success"</span>: <span class="json-bool">false</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Error description"</span>,
+  <span class="json-key">"errors"</span>: [...]
+}</code></pre>
+          </div>
+        </div>
+        <div class="tab-content" id="res-pagination">
+          <div class="json-block">
+<pre><code>{
+  <span class="json-key">"pagination"</span>: {
+    <span class="json-key">"page"</span>: <span class="json-num">1</span>,
+    <span class="json-key">"limit"</span>: <span class="json-num">12</span>,
+    <span class="json-key">"total"</span>: <span class="json-num">156</span>,
+    <span class="json-key">"totalPages"</span>: <span class="json-num">13</span>
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUTHENTICATION -->
+    <section class="content-section" id="authentication">
+      <div class="section-header">
+        <span class="section-number">02</span>
+        <div>
+          <h2 class="section-title">Authentication</h2>
+          <p class="section-desc">API sử dụng JWT tokens để xác thực người dùng. Access token có thời hạn 15 phút.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Bearer Token</h3>
+        <p>Thêm access token vào header <code>Authorization</code> cho tất cả protected endpoints:</p>
+        <div class="code-block">
+<pre><code>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+          <button class="copy-btn" data-copy="Authorization: Bearer " title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">User Roles</h3>
+        <div class="roles-grid">
+          <div class="role-item">
+            <span class="role-badge role-user">USER</span>
+            <span>Người dùng thông thường</span>
+          </div>
+          <div class="role-item">
+            <span class="role-badge role-seller">SELLER</span>
+            <span>Có thể đăng và quản lý sản phẩm</span>
+          </div>
+          <div class="role-item">
+            <span class="role-badge role-admin">ADMIN</span>
+            <span>Quản trị viên - duyệt sản phẩm, quản lý users</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Token Flow</h3>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-content">
+              <strong>Register / Login</strong>
+              <p>Nhận accessToken và refreshToken (cookie)</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-content">
+              <strong>Gửi request với Bearer token</strong>
+              <p>Authorization: Bearer &lt;accessToken&gt;</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-content">
+              <strong>Token hết hạn (401)</strong>
+              <p>Gọi POST /auth/refresh để lấy token mới</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ERRORS -->
+    <section class="content-section" id="errors">
+      <div class="section-header">
+        <span class="section-number">03</span>
+        <div>
+          <h2 class="section-title">Errors & Status Codes</h2>
+          <p class="section-desc">Mã lỗi chuẩn và cách xử lý từng loại error.</p>
+        </div>
+      </div>
+
+      <div class="error-grid">
+        <div class="error-card error-2xx">
+          <div class="error-code">2xx</div>
+          <div class="error-info">
+            <h4>Success</h4>
+            <ul>
+              <li><code>200</code> — OK</li>
+              <li><code>201</code> — Created</li>
+              <li><code>204</code> — No Content</li>
+            </ul>
+          </div>
+        </div>
+        <div class="error-card error-4xx">
+          <div class="error-code">4xx</div>
+          <div class="error-info">
+            <h4>Client Errors</h4>
+            <ul>
+              <li><code>400</code> — Bad Request</li>
+              <li><code>401</code> — Unauthorized</li>
+              <li><code>403</code> — Forbidden</li>
+              <li><code>404</code> — Not Found</li>
+              <li><code>429</code> — Rate Limited</li>
+            </ul>
+          </div>
+        </div>
+        <div class="error-card error-5xx">
+          <div class="error-code">5xx</div>
+          <div class="error-info">
+            <h4>Server Errors</h4>
+            <ul>
+              <li><code>500</code> — Internal Server Error</li>
+              <li><code>502</code> — Bad Gateway</li>
+              <li><code>503</code> — Service Unavailable</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDPOINT SECTIONS -->
+    <div id="endpointsContainer"></div>
+
+    <!-- QUICK REFERENCE -->
+    <section class="content-section" id="quickref">
+      <div class="section-header">
+        <span class="section-number">Quick Reference</span>
+        <div>
+          <h2 class="section-title">Quick Reference</h2>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Password Requirements</h3>
+        <ul class="feature-list">
+          <li>Tối thiểu <strong>8 ký tự</strong></li>
+          <li>Ít nhất <strong>1 chữ hoa</strong> (A-Z)</li>
+          <li>Ít nhất <strong>1 chữ thường</strong> (a-z)</li>
+          <li>Ít nhất <strong>1 số</strong> (0-9)</li>
+          <li>Ít nhất <strong>1 ký tự đặc biệt</strong> (!@#$%^...)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Email Templates</h3>
+        <div class="email-templates">
+          <div class="email-item">
+            <div class="email-icon login">🔐</div>
+            <div>
+              <strong>Login Alert</strong>
+              <p>Gửi khi có đăng nhập mới (thời gian, IP, thiết bị)</p>
+            </div>
+          </div>
+          <div class="email-item">
+            <div class="email-icon welcome">👋</div>
+            <div>
+              <strong>Welcome</strong>
+              <p>Gửi khi đăng ký thành công</p>
+            </div>
+          </div>
+          <div class="email-item">
+            <div class="email-icon verify">✅</div>
+            <div>
+              <strong>Email Verification</strong>
+              <p>Link xác minh email</p>
+            </div>
+          </div>
+          <div class="email-item">
+            <div class="email-icon reset">🔑</div>
+            <div>
+              <strong>Password Reset</strong>
+              <p>Link đặt lại mật khẩu</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Security Headers</h3>
+        <div class="headers-grid">
+          <code>Content-Security-Policy</code>
+          <code>X-Frame-Options: DENY</code>
+          <code>X-Content-Type-Options: nosniff</code>
+          <code>Strict-Transport-Security</code>
+          <code>Referrer-Policy: strict-origin</code>
+          <code>X-XSS-Protection: 0</code>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Mini Marketplace API Documentation v1.0.0 · Generated April 2026</p>
+    </footer>
+  </main>
+
+  </div><!-- /.layout-wrapper -->
+
+  <!-- SEARCH OVERLAY -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-modal">
+      <div class="search-input-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchModal" placeholder="Search endpoints..." autocomplete="off">
+        <kbd>ESC</kbd>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

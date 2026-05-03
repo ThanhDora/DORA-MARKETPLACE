@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Xác minh Email - Mini Marketplace</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      padding: 40px;
+      max-width: 450px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .icon.loading {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+    .icon.success {
+      background: #d1fae5;
+      color: #059669;
+    }
+    .icon.error {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    h1 {
+      font-size: 24px;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #6b7280;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e0e7ff;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .hidden { display: none !important; }
+    .btn {
+      display: inline-block;
+      padding: 12px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+    .links {
+      margin-top: 20px;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .links a {
+      color: #4f46e5;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Loading State -->
+    <div id="loading-state">
+      <div class="icon loading">
+        <div class="spinner"></div>
+      </div>
+      <h1>Đang xác minh...</h1>
+      <p>Vui lòng chờ trong giây lát.<br>Chúng tôi đang xác minh email của bạn.</p>
+    </div>
+
+    <!-- Success State -->
+    <div id="success-state" class="hidden">
+      <div class="icon success">✓</div>
+      <h1>Xác minh thành công!</h1>
+      <p>Tài khoản của bạn đã được xác minh.<br>Bạn sẽ được chuyển đến trang đăng nhập trong 3 giây...</p>
+      <a href="/login" class="btn btn-primary">Đến trang đăng nhập</a>
+      <div class="links">
+        <a href="/login">Đăng nhập ngay</a>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden">
+      <div class="icon error">✕</div>
+      <h1>Xác minh thất bại</h1>
+      <p id="error-message">Token không hợp lệ hoặc đã hết hạn.</p>
+      <a href="/register" class="btn btn-primary">Đăng ký tài khoản mới</a>
+      <div class="links">
+        <a href="/login">Quay lại đăng nhập</a>
+        <a href="/register">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/verify-email.js"></script>
+</body>
+</html>

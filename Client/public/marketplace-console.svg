@@ -1,0 +1,36 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MINI_MARKETPLACE product console</title>
+  <desc id="desc">A clean marketplace interface for account and key products.</desc>
+  <rect width="1600" height="1100" rx="72" fill="#F5F5F7"/>
+  <rect x="80" y="86" width="1440" height="928" rx="48" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="130" y="138" width="1340" height="92" rx="24" fill="#F5F5F7"/>
+  <circle cx="179" cy="184" r="18" fill="#1D1D1F"/>
+  <rect x="219" y="169" width="230" height="30" rx="15" fill="#1D1D1F"/>
+  <rect x="1180" y="163" width="120" height="42" rx="21" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="1320" y="163" width="100" height="42" rx="21" fill="#0071E3"/>
+  <text x="158" y="314" fill="#6E6E73" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">DIGITAL STOCK</text>
+  <text x="158" y="395" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="600">Account and key</text>
+  <text x="158" y="466" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="600">ready to deliver.</text>
+  <rect x="160" y="548" width="344" height="248" rx="28" fill="#F5F5F7" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="198" y="592" width="86" height="86" rx="22" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <text x="221" y="645" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">AC</text>
+  <rect x="198" y="704" width="220" height="22" rx="11" fill="#1D1D1F"/>
+  <rect x="198" y="744" width="164" height="18" rx="9" fill="#6E6E73"/>
+  <rect x="532" y="548" width="344" height="248" rx="28" fill="#F5F5F7" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="570" y="592" width="86" height="86" rx="22" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <text x="594" y="645" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">KY</text>
+  <rect x="570" y="704" width="220" height="22" rx="11" fill="#1D1D1F"/>
+  <rect x="570" y="744" width="190" height="18" rx="9" fill="#6E6E73"/>
+  <rect x="904" y="548" width="344" height="248" rx="28" fill="#F5F5F7" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="942" y="592" width="86" height="86" rx="22" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <text x="965" y="645" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">API</text>
+  <rect x="942" y="704" width="220" height="22" rx="11" fill="#1D1D1F"/>
+  <rect x="942" y="744" width="174" height="18" rx="9" fill="#6E6E73"/>
+  <rect x="1276" y="548" width="144" height="248" rx="28" fill="#F5F5F7" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="1316" y="592" width="64" height="64" rx="18" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="2"/>
+  <rect x="1316" y="704" width="64" height="20" rx="10" fill="#1D1D1F"/>
+  <rect x="160" y="850" width="1260" height="74" rx="26" fill="#1D1D1F"/>
+  <text x="204" y="898" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Secure handoff per order</text>
+  <rect x="1174" y="867" width="208" height="40" rx="20" fill="#FFFFFF"/>
+  <text x="1212" y="895" fill="#1D1D1F" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">View inventory</text>
+</svg>
