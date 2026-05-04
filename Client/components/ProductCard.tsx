@@ -142,7 +142,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         </div>
         <div className="commerce-card__actions">
           <div className="commerce-card__rating commerce-card__rating--inline">
-            <Star size={15} fill="currentColor" className="text-yellow-500" />
+            <Star size={15} fill="currentColor" />
             <span>{ratingValue}/5 sao</span>
           </div>
           <div className="commerce-card__action-buttons">

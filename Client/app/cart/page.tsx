@@ -351,7 +351,7 @@ export default function CartPage() {
                     />
                     {selectedSet.has(item.id) ? <CheckSquare size={20} /> : <Square size={20} />}
                   </label>
-                  <Link href={`/products/${product.id}`} className="w-[102px] aspect-square rounded-[14px] overflow-hidden product-visual grid place-items-center overflow-hidden text-primary bg-neutral border border-border transition-all hover:border-tertiary/35">
+                  <Link href={`/products/${product.id}`} className="cart-line__visual product-visual grid place-items-center text-primary bg-neutral border border-border transition-all hover:border-tertiary/35">
                     {product.images[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={product.images[0]} alt={product.name} />
@@ -365,7 +365,7 @@ export default function CartPage() {
                       <Link href={`/products/${product.id}`}>
                         <h3>{product.name}</h3>
                       </Link>
-                      <p>{product.description}</p>
+                      <p className="cart-line__description">{product.description}</p>
                       <small>{product.stock > 0 ? `${product.stock} còn lại trong kho` : "Hết hàng"}</small>
                     </div>
                     <strong>{formatCurrency(product.price)}</strong>

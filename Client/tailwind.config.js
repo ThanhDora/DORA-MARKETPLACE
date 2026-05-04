@@ -33,10 +33,10 @@ module.exports = {
         'hover': 'var(--shadow-hover)',
       },
       fontFamily: {
-        sans: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', 'sans-serif'],
-        display: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
-        poppins: ['"SF Pro Text"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        sans: ['"DM Sans"', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        display: ['"Playfair Display"', 'Lora', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', '"IBM Plex Mono"', 'monospace'],
+        poppins: ['"DM Sans"', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
       },
       transitionDuration: {
         'fast': '180ms',

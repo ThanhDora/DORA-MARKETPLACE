@@ -61,7 +61,6 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
 
   return (
     <div className="inventory-panel inventory-panel--leaderboard" aria-label="Bảng xếp hạng sản phẩm bán chạy nhất">
-      <span className="inventory-panel__shine" aria-hidden="true" />
       <div className="inventory-panel__header">
         <video
           className="inventory-panel__header-media"
@@ -158,13 +157,13 @@ export function RealtimeFeaturedProductsSection({ initialProducts }: RealtimeHom
 
   return (
     <section className="px-inline py-block featured-section">
-      <div className="grid justify-items-start mb-[34px] grid grid-cols-[minmax(0,1fr)_auto] gap-5 items-end">
+      <div className="anthro-section-head">
         <div>
-          <p className="m-0 mb-[14px] text-secondary text-[13px] font-extrabold tracking-normal uppercase">Nổi bật</p>
+          <p>Nổi bật</p>
           <h2>Sản phẩm đang được mua nhiều</h2>
           <p>Hiển thị tồn kho, người bán, đánh giá và nút thêm giỏ hàng để người mua quyết định nhanh.</p>
         </div>
-        <Link href="/catalog?sortBy=soldCount&sortOrder=desc" className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-primary bg-transparent border border-border shadow-none hover:text-tertiary hover:border-tertiary/40 hover:bg-surface">
+        <Link href="/catalog?sortBy=soldCount&sortOrder=desc" className="anthro-button anthro-button--ghost">
           Lọc bán chạy
         </Link>
       </div>

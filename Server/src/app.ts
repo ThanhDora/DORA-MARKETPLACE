@@ -98,6 +98,27 @@ app.use('/api/uploads/images', (_req, res, next) => {
   res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
   next();
 });
+app.get('/api/uploads/images/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename || '');
+  const imageExt = /\.(jpg|jpeg|png|gif|webp)$/i;
+  if (!filename || !imageExt.test(filename)) {
+    return res.status(404).json({ success: false, message: 'Image not found' });
+  }
+
+  const candidates = [
+    path.resolve(process.cwd(), 'uploads', 'images', filename),
+    path.resolve(process.cwd(), 'uploads', filename),
+  ];
+  const imageFile = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!imageFile) {
+    return res.status(404).json({ success: false, message: 'Image not found' });
+  }
+
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', env.FRONTEND_URL);
+  res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  return res.sendFile(imageFile);
+});
 app.use('/api/uploads/images', express.static(path.resolve(process.cwd(), 'uploads', 'images')));
 app.get('/api/uploads/:filename', (req, res, next) => {
   const filename = path.basename(req.params.filename || '');

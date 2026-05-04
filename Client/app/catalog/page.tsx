@@ -59,6 +59,9 @@ function getSafePage(value?: string) {
   return Math.floor(parsed);
 }
 
+const categoryButtonClass = "catalog-filter-button";
+const activeCategoryButtonClass = "catalog-filter-button is-active";
+
 function buildPaginationItems(currentPage: number, totalPages: number) {
   const items = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
   return [...items].filter((page) => page >= 1 && page <= totalPages).sort((left, right) => left - right);
@@ -99,7 +102,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href={buildCatalogHref(params?.search, undefined, params?.type)}
-              className={!selectedCategoryId ? "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] is-active text-on-accent bg-tertiary border-tertiary" : "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]"}
+              className={!selectedCategoryId ? activeCategoryButtonClass : categoryButtonClass}
             >
               Tất cả danh mục
             </Link>
@@ -109,7 +112,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                 <Link
                   key={category.id}
                   href={buildCatalogHref(params?.search, String(category.id), params?.type)}
-                  className={isActive ? "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] is-active text-on-accent bg-tertiary border-tertiary" : "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]"}
+                  className={isActive ? activeCategoryButtonClass : categoryButtonClass}
                 >
                   {category.name}
                 </Link>

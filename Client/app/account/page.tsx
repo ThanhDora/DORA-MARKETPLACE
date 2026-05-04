@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
+  API_BASE_URL,
   formatCurrency,
   normalizeProduct,
   type ApiEnvelope,
@@ -65,6 +66,20 @@ function roleLabel(role: string) {
   return "Người mua";
 }
 
+function resolveAvatarUrl(value?: string | null) {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^(https?:|blob:|data:)/i.test(raw)) return raw;
+
+  try {
+    const apiOrigin = new URL(API_BASE_URL).origin;
+    if (raw.startsWith("/api/")) return `${apiOrigin}${raw}`;
+    if (raw.startsWith("/uploads/")) return `${apiOrigin}/api${raw}`;
+  } catch {}
+
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
+
 export default function AccountPage() {
   const router = useRouter();
   const { user, isAuthenticated, isInitializing, apiFetch, logout } = useAuth();
@@ -72,19 +87,23 @@ export default function AccountPage() {
   const { showToast } = useToast();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [wishlist, setWishlist] = useState<StoreProduct[]>([]);
+  const [showAllWishlist, setShowAllWishlist] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", phone: "", bio: "", address: "" });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isAvatarBroken, setIsAvatarBroken] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const displayName = profile?.name ?? user?.name ?? "";
   const displayEmail = profile?.email ?? user?.email ?? "";
   const displayRole = profile?.role ?? user?.role ?? "";
   const displayAvatar = profile?.avatar ?? user?.avatar ?? null;
+  const displayAvatarSrc = resolveAvatarUrl(displayAvatar);
   const notifCount = unreadNotificationCount;
+  const visibleWishlist = showAllWishlist ? wishlist : wishlist.slice(0, 10);
 
   const profileCompleteness = useMemo(() => {
     const fields = [
@@ -98,6 +117,10 @@ export default function AccountPage() {
     const done = fields.filter(Boolean).length;
     return Math.round((done / fields.length) * 100);
   }, [displayAvatar, displayEmail, displayName, profile?.address, profile?.bio, profile?.phone]);
+
+  useEffect(() => {
+    setIsAvatarBroken(false);
+  }, [displayAvatarSrc]);
 
   const loadOrderCount = useCallback(async () => {
     if (!isAuthenticated) {
@@ -256,7 +279,11 @@ export default function AccountPage() {
             <div className="account-profile-panel__top">
               <div className="account-profile-panel__avatar-wrap">
                 <div className="account-profile-panel__avatar">
-                  {displayAvatar ? <img src={displayAvatar} alt={displayName} /> : <span>{userInitials(displayName)}</span>}
+                  {displayAvatarSrc && !isAvatarBroken ? (
+                    <img src={displayAvatarSrc} alt={displayName} onError={() => setIsAvatarBroken(true)} />
+                  ) : (
+                    <span>{userInitials(displayName)}</span>
+                  )}
                 </div>
               </div>
 
@@ -395,9 +422,9 @@ export default function AccountPage() {
                   <div className="account-edit-form__avatar-preview">
                     <img src={avatarPreview} alt="Avatar preview" />
                   </div>
-                ) : displayAvatar ? (
+                ) : displayAvatarSrc ? (
                   <div className="account-edit-form__avatar-preview">
-                    <img src={displayAvatar} alt="Current avatar" />
+                    <img src={displayAvatarSrc} alt="Current avatar" onError={() => setIsAvatarBroken(true)} />
                   </div>
                 ) : null}
               </div>
@@ -524,7 +551,7 @@ export default function AccountPage() {
 
             {wishlist.length ? (
               <div className="account-wishlist-card__list">
-                {wishlist.slice(0, 10).map((product) => (
+                {visibleWishlist.map((product) => (
                   <Link key={product.id} href={`/products/${product.id}`} className="account-wishlist-card__item">
                     <span className="account-wishlist-card__visual">
                       {product.images[0] ? <img src={product.images[0]} alt={product.name} /> : <span>{product.type}</span>}
@@ -542,7 +569,13 @@ export default function AccountPage() {
             )}
 
             {wishlist.length > 10 ? (
-              <p className="account-wishlist-card__more">và {wishlist.length - 10} sản phẩm khác</p>
+              <button
+                type="button"
+                className="account-wishlist-card__more"
+                onClick={() => setShowAllWishlist((current) => !current)}
+              >
+                {showAllWishlist ? "Thu gọn" : `Xem thêm ${wishlist.length - 10} sản phẩm`}
+              </button>
             ) : null}
           </article>
         </aside>

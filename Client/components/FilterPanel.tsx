@@ -18,6 +18,9 @@ const typeFilters: Array<{ label: string; value?: ProductType }> = [
   { label: "File", value: "FILE" },
 ];
 
+const filterButtonClass = "catalog-filter-button";
+const activeFilterButtonClass = "catalog-filter-button is-active";
+
 function hrefForType(type: ProductType | undefined, search?: string, categoryId?: string) {
   const query = new URLSearchParams();
   if (type) query.set("type", type);
@@ -51,8 +54,8 @@ export function FilterPanel({ categories, selectedType, selectedCategoryId, curr
                 href={hrefForType(filter.value, currentSearch, selectedCategoryId)}
                 className={
                   filter.value === selectedType || (!filter.value && !selectedType)
-                    ? "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] is-active text-on-accent bg-tertiary border-tertiary"
-                    : "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]"
+                    ? activeFilterButtonClass
+                    : filterButtonClass
                 }
               >
                 {filter.label}
@@ -65,7 +68,7 @@ export function FilterPanel({ categories, selectedType, selectedCategoryId, curr
           <div className="flex gap-2.5 flex-wrap grid items-stretch">
             <Link
               href={hrefForType(selectedType, currentSearch)}
-              className={!selectedCategoryId ? "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] is-active text-on-accent bg-tertiary border-tertiary" : "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]"}
+              className={!selectedCategoryId ? activeFilterButtonClass : filterButtonClass}
             >
               Tất cả danh mục
             </Link>
@@ -73,7 +76,7 @@ export function FilterPanel({ categories, selectedType, selectedCategoryId, curr
               <Link
                 key={category.id}
                 href={hrefForCategory(String(category.id), selectedType)}
-                className={selectedCategoryId === String(category.id) ? "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] is-active text-on-accent bg-tertiary border-tertiary" : "inline-flex min-h-[42px] items-center justify-center p-[10px_14px] text-secondary bg-surface border border-border rounded-full text-[14px] font-bold transition-all hover:text-primary hover:border-tertiary/35 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]"}
+                className={selectedCategoryId === String(category.id) ? activeFilterButtonClass : filterButtonClass}
               >
                 {category.name}
               </Link>

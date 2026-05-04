@@ -9,8 +9,6 @@ import { useRealtime } from "@/components/RealtimeProvider";
 import { CART_UPDATED_EVENT } from "@/lib/cart-events";
 import type { ApiEnvelope } from "@/lib/api";
 
-type Theme = "light" | "dark";
-
 type CartCountResponse = {
   items?: { quantity?: number }[];
 };
@@ -21,44 +19,12 @@ type NavLink = {
   badgeCount?: number;
 };
 
-const storageKey = "dora-marketplace-theme";
 const navigationId = "primary-navigation";
 
 const baseNavLinks = [
   { href: "/", label: "Trang chủ" },
   { href: "/catalog", label: "Sản phẩm" },
 ];
-
-function getStoredTheme(): Theme | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const theme = window.localStorage.getItem(storageKey);
-  return theme === "light" || theme === "dark" ? theme : null;
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme;
-}
-
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M20.2 14.3A8.5 8.5 0 0 1 9.7 3.8 8.5 8.5 0 1 0 20.2 14.3Z" />
-    </svg>
-  );
-}
 
 function notificationItemKey(item: { id?: number; title?: string; type?: string; content?: string }, index: number) {
   if (typeof item.id === "number") return `id:${item.id}`;
@@ -98,16 +64,14 @@ export function HeaderControls() {
   const pathname = usePathname();
   const { user, isAuthenticated, isInitializing, apiFetch } = useAuth();
   const { notifications, cartVersion, unreadNotificationCount, markNotificationAsRead } = useRealtime();
-  const [theme, setTheme] = useState<Theme>("light");
   const [cartCount, setCartCount] = useState(0);
   const [isRealtimeFlash, setIsRealtimeFlash] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<(typeof notifications)[number] | null>(null);
   const previousUnreadRef = useRef(0);
 
   useEffect(() => {
-    const nextTheme = getStoredTheme() ?? "light";
-    setTheme(nextTheme);
-    applyTheme(nextTheme);
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
   }, []);
 
   useEffect(() => {
@@ -157,15 +121,6 @@ export function HeaderControls() {
       window.removeEventListener("focus", refreshCartCount);
     };
   }, [loadCartCount]);
-
-  function toggleTheme() {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    window.localStorage.setItem(storageKey, nextTheme);
-    setTheme(nextTheme);
-    applyTheme(nextTheme);
-  }
-
-  const nextLabel = theme === "dark" ? "sáng" : "tối";
 
   const unreadNotifications = unreadNotificationCount;
 
@@ -227,74 +182,83 @@ export function HeaderControls() {
         })}
       </nav>
 
-      <Link
-        href="/cart"
-        className="cart-entry"
-        aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ""}`}
-        title="Giỏ hàng"
-      >
-        <ShoppingCart size={18} />
-        <span>Giỏ hàng</span>
-        {cartCount > 0 ? <strong>{cartCount > 99 ? "99+" : cartCount}</strong> : null}
-      </Link>
-
-      <button
-        type="button"
-        className="theme-toggle"
-        onClick={toggleTheme}
-        aria-label={`Chuyển sang giao diện ${nextLabel}`}
-        title={`Chuyển sang giao diện ${nextLabel}`}
-        aria-pressed={theme === "dark"}
-      >
-        {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-      </button>
-
-      <div className="notification-menu">
+      <div className="header-actions">
         <Link
-          href="/account/notifications"
-          className={[
-            "notification-entry",
-            unreadNotifications > 0 ? "has-unread" : "",
-            isRealtimeFlash ? "realtime-flash" : "",
-          ].filter(Boolean).join(" ")}
-          aria-label={`Thông báo${unreadNotifications ? ` (${unreadNotifications} chưa đọc)` : ""}`}
-          title="Thông báo"
+          href="/cart"
+          className="cart-entry"
+          aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ""}`}
+          title="Giỏ hàng"
         >
-          <Bell size={18} />
-          {unreadNotifications > 0 ? (
-            <span className="notification-badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
-          ) : null}
+          <ShoppingCart size={18} />
+          {cartCount > 0 ? <strong>{cartCount > 99 ? "99+" : cartCount}</strong> : null}
         </Link>
-        <div className="notification-popover">
-          <div className="notification-popover__head">
-            <div className="notification-popover__title">
-              <strong>Thông báo</strong>
-              {unreadNotifications > 0 ? (
-                <span>{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
-              ) : null}
-            </div>
-            <Link href="/account/notifications">Xem tất cả thông báo</Link>
-          </div>
-          {notifications.length > 0 ? (
-            <div className="notification-popover__list">
-              {notifications.slice(0, 5).map((item, index) => {
-                const key = notificationItemKey(item, index);
-                const toApprovalPage = isApprovalNotification(item, user?.role);
-                const itemType = notificationTypeLabel(item.type);
-                const isUnread = !item.isRead;
-                const itemClassName = [
-                  "notification-popover__item",
-                  toApprovalPage ? "is-approval" : "",
-                  isUnread ? "is-unread" : "",
-                ].filter(Boolean).join(" ");
 
-                if (toApprovalPage) {
+        <div className="notification-menu">
+          <Link
+            href="/account/notifications"
+            className={[
+              "notification-entry",
+              unreadNotifications > 0 ? "has-unread" : "",
+              isRealtimeFlash ? "realtime-flash" : "",
+            ].filter(Boolean).join(" ")}
+            aria-label={`Thông báo${unreadNotifications ? ` (${unreadNotifications} chưa đọc)` : ""}`}
+            title="Thông báo"
+          >
+            <Bell size={18} />
+            {unreadNotifications > 0 ? (
+              <span className="notification-badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
+            ) : null}
+          </Link>
+          <div className="notification-popover">
+            <div className="notification-popover__head">
+              <div className="notification-popover__title">
+                <strong>Thông báo</strong>
+                {unreadNotifications > 0 ? (
+                  <span>{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
+                ) : null}
+              </div>
+              <Link href="/account/notifications">Xem tất cả thông báo</Link>
+            </div>
+            {notifications.length > 0 ? (
+              <div className="notification-popover__list">
+                {notifications.slice(0, 5).map((item, index) => {
+                  const key = notificationItemKey(item, index);
+                  const toApprovalPage = isApprovalNotification(item, user?.role);
+                  const itemType = notificationTypeLabel(item.type);
+                  const isUnread = !item.isRead;
+                  const itemClassName = [
+                    "notification-popover__item",
+                    toApprovalPage ? "is-approval" : "",
+                    isUnread ? "is-unread" : "",
+                  ].filter(Boolean).join(" ");
+
+                  if (toApprovalPage) {
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className={itemClassName}
+                        onClick={() => openApprovalPage(item)}
+                      >
+                        <div className="notification-popover__item-top">
+                          <strong>{item.title ?? item.type ?? "Thông báo"}</strong>
+                          <small>{itemType}</small>
+                        </div>
+                        <span className="notification-popover__item-content">{item.content ?? ""}</span>
+                        <div className="notification-popover__item-meta">
+                          <time>{formatNotificationTime(item.createdAt)}</time>
+                          <em>Đi đến duyệt</em>
+                        </div>
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       key={key}
                       type="button"
                       className={itemClassName}
-                      onClick={() => openApprovalPage(item)}
+                      onClick={() => openNotificationModal(item)}
                     >
                       <div className="notification-popover__item-top">
                         <strong>{item.title ?? item.type ?? "Thông báo"}</strong>
@@ -303,34 +267,31 @@ export function HeaderControls() {
                       <span className="notification-popover__item-content">{item.content ?? ""}</span>
                       <div className="notification-popover__item-meta">
                         <time>{formatNotificationTime(item.createdAt)}</time>
-                        <em>Đi đến duyệt</em>
+                        <em>Mở chi tiết</em>
                       </div>
                     </button>
                   );
-                }
+                })}
+              </div>
+            ) : (
+              <p className="notification-popover__empty">Chưa có thông báo mới.</p>
+            )}
+          </div>
+        </div>
 
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={itemClassName}
-                    onClick={() => openNotificationModal(item)}
-                  >
-                    <div className="notification-popover__item-top">
-                      <strong>{item.title ?? item.type ?? "Thông báo"}</strong>
-                      <small>{itemType}</small>
-                    </div>
-                    <span className="notification-popover__item-content">{item.content ?? ""}</span>
-                    <div className="notification-popover__item-meta">
-                      <time>{formatNotificationTime(item.createdAt)}</time>
-                      <em>Mở chi tiết</em>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        <div className="account-actions">
+          {isInitializing ? (
+            <span className="account-skeleton" aria-hidden="true" />
+          ) : isAuthenticated ? (
+            <Link href="/account" className="account-pill account-pill--cta" title={user?.email ?? "Tài khoản"}>
+              <UserCircle size={17} />
+              <span>{user?.name}</span>
+            </Link>
           ) : (
-            <p className="notification-popover__empty">Chưa có thông báo mới.</p>
+            <Link href="/account" className="account-pill account-pill--cta">
+              <UserCircle size={17} />
+              <span>Tài khoản</span>
+            </Link>
           )}
         </div>
       </div>
@@ -374,21 +335,6 @@ export function HeaderControls() {
         </div>
       ) : null}
 
-      <div className="account-actions">
-        {isInitializing ? (
-          <span className="account-skeleton" aria-hidden="true" />
-        ) : isAuthenticated ? (
-          <Link href="/account" className="account-pill" title={user?.email ?? "Tài khoản"}>
-            <UserCircle size={17} />
-            <span>{user?.name}</span>
-          </Link>
-        ) : (
-          <Link href="/account" className="account-pill">
-            <UserCircle size={17} />
-            <span>Tài khoản</span>
-          </Link>
-        )}
-      </div>
     </div>
   );
 }
