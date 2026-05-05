@@ -23,36 +23,40 @@ export default async function HomePage() {
   return (
     <>
       <main className="home-no-select">
-        <section className="anthro-hero px-inline">
-          <div className="anthro-hero__copy">
-            <p className="hero-kicker">
-              <span>Chợ sản phẩm số</span>
-              <span className="hero-kicker__realtime">
-                <span className="hero-kicker__dot" aria-hidden="true" />
-                sẵn sàng realtime
-              </span>
-            </p>
-            <h1 className="hero-headline">
-              <span className="hero-headline__lead">Marketplace cho sản phẩm số</span>
-              <span className="hero-headline__underlined">rõ nguồn, giao nhanh.</span>
-            </h1>
-            <p className="hero-intro">
-              DORA MARKETPLACE gom tài khoản, license, API key và file số đã duyệt với tồn kho rõ,
-              seller có danh tính và quy trình thanh toán được bảo vệ.
-            </p>
-            <SearchInput />
-            <div className="flex flex-wrap gap-3 mt-7">
-              <Link href="/catalog" className="anthro-button anthro-button--primary">
-                Xem marketplace
-                <ArrowRight size={17} />
-              </Link>
-              <Link href="/seller" className="anthro-button anthro-button--ghost">
-                Bán sản phẩm
-              </Link>
+        <section className="hero px-inline">
+          <div className="hero__body">
+            <div className="hero__copy">
+              <p className="hero__kicker">
+                <span className="hero__kicker-ornament" aria-hidden="true">✦</span>
+                Chợ sản phẩm số &middot; realtime
+              </p>
+              <h1 className="hero__title">
+                <span className="hero__title-em">Marketplace</span>
+                <span className="hero__title-sub">Sản phẩm số &mdash; rõ nguồn, giao nhanh</span>
+              </h1>
+              <div className="hero__rule" aria-hidden="true">
+                <span className="hero__rule-line" />
+                <span className="hero__rule-dot">✦</span>
+                <span className="hero__rule-line" />
+              </div>
+              <p className="hero__desc">
+                Tài khoản, license, API key và file số đã duyệt với tồn kho rõ ràng,
+                seller có danh tính và quy trình thanh toán được bảo vệ.
+              </p>
+              <SearchInput />
+              <div className="hero__actions">
+                <Link href="/catalog" className="hero__btn hero__btn--primary">
+                  Xem marketplace
+                  <ArrowRight size={17} />
+                </Link>
+                <Link href="/seller" className="hero__btn hero__btn--ghost">
+                  Bán sản phẩm
+                </Link>
+              </div>
             </div>
-          </div>
 
           <RealtimeHomeLeaderboard initialProducts={products} />
+          </div>
         </section>
 
         <RealtimeFeaturedProductsSection initialProducts={products} />
@@ -67,7 +71,7 @@ export default async function HomePage() {
               Xem tất cả
             </Link>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-[var(--grid-gap)]">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-[var(--grid-gap)]">
             {categories.slice(0, 6).map((category) => (
               <Link key={category.id} href={`/catalog?categoryId=${category.id}`} className="category-card">
                 <strong>{category.name}</strong>
