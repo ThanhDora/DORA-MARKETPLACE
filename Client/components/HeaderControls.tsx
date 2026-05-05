@@ -68,6 +68,13 @@ export function HeaderControls() {
   const [isRealtimeFlash, setIsRealtimeFlash] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<(typeof notifications)[number] | null>(null);
   const previousUnreadRef = useRef(0);
+  const loadCartCountRef = useRef<typeof loadCartCount>(null);
+  const cartCountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleCartCountReload = useCallback(() => {
+    if (cartCountTimerRef.current) clearTimeout(cartCountTimerRef.current);
+    cartCountTimerRef.current = setTimeout(() => loadCartCountRef.current?.(), 300);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = "light";
@@ -100,27 +107,27 @@ export function HeaderControls() {
     }
   }, [apiFetch, isAuthenticated, isInitializing]);
 
+  loadCartCountRef.current = loadCartCount;
+
   useEffect(() => {
     loadCartCount();
   }, [loadCartCount]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    loadCartCount();
-  }, [cartVersion, isAuthenticated, loadCartCount]);
+    scheduleCartCountReload();
+  }, [cartVersion, isAuthenticated, scheduleCartCountReload]);
 
   useEffect(() => {
-    function refreshCartCount() {
-      loadCartCount();
-    }
-
-    window.addEventListener(CART_UPDATED_EVENT, refreshCartCount);
-    window.addEventListener("focus", refreshCartCount);
+    if (!isAuthenticated) return;
+    window.addEventListener(CART_UPDATED_EVENT, scheduleCartCountReload);
+    window.addEventListener("focus", scheduleCartCountReload);
     return () => {
-      window.removeEventListener(CART_UPDATED_EVENT, refreshCartCount);
-      window.removeEventListener("focus", refreshCartCount);
+      window.removeEventListener(CART_UPDATED_EVENT, scheduleCartCountReload);
+      window.removeEventListener("focus", scheduleCartCountReload);
+      if (cartCountTimerRef.current) clearTimeout(cartCountTimerRef.current);
     };
-  }, [loadCartCount]);
+  }, [isAuthenticated, scheduleCartCountReload]);
 
   const unreadNotifications = unreadNotificationCount;
 

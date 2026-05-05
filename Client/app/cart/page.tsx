@@ -13,7 +13,7 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatCurrency,
   normalizeProduct,
@@ -60,6 +60,14 @@ export default function CartPage() {
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const initialLoadDone = useRef(false);
+  const loadCartRef = useRef<typeof loadCart>(null);
+  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleReload = useCallback(() => {
+    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+    reloadTimerRef.current = setTimeout(() => loadCartRef.current?.(), 300);
+  }, []);
 
   const selectedSet = useMemo(() => new Set(selectedItemIds), [selectedItemIds]);
   const selectedItems = useMemo(
@@ -75,14 +83,16 @@ export default function CartPage() {
   const cartStepProgress = ((cartActiveStep - 1) / 2) * 100;
 
   const loadCart = useCallback(async () => {
+    const isInitial = !initialLoadDone.current;
+
     if (!isAuthenticated) {
       setItems([]);
       setSelectedItemIds([]);
-      setIsLoading(false);
+      if (isInitial) setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    if (isInitial) setIsLoading(true);
     try {
       const response = await apiFetch<ApiEnvelope<CartResponse>>("/cart");
       const nextItems = (response.data.items ?? []).map(toCartLine);
@@ -93,14 +103,17 @@ export default function CartPage() {
         const valid = current.filter((id) => nextItems.some((item) => item.id === id));
         return valid.length > 0 ? valid : nextItems.map((item) => item.id);
       });
+      initialLoadDone.current = true;
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Không thể tải giỏ hàng.");
       setItems([]);
       setSelectedItemIds([]);
     } finally {
-      setIsLoading(false);
+      if (isInitial) setIsLoading(false);
     }
   }, [apiFetch, isAuthenticated, showToast]);
+
+  loadCartRef.current = loadCart;
 
   useEffect(() => {
     if (!isInitializing) {
@@ -110,18 +123,17 @@ export default function CartPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    loadCart();
-  }, [cartVersion, isAuthenticated, loadCart]);
+    scheduleReload();
+  }, [cartVersion, isAuthenticated, scheduleReload]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const refreshCart = () => {
-      loadCart();
+    window.addEventListener(CART_UPDATED_EVENT, scheduleReload);
+    return () => {
+      window.removeEventListener(CART_UPDATED_EVENT, scheduleReload);
+      if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
     };
-
-    window.addEventListener(CART_UPDATED_EVENT, refreshCart);
-    return () => window.removeEventListener(CART_UPDATED_EVENT, refreshCart);
-  }, [isAuthenticated, loadCart]);
+  }, [isAuthenticated, scheduleReload]);
 
   async function updateQuantity(item: CartLine, quantity: number) {
     const nextQuantity = Math.min(Math.max(quantity, 1), Math.max(item.normalizedProduct.stock, 1));
@@ -201,7 +213,7 @@ export default function CartPage() {
     router.push(`/checkout?items=${encodeURIComponent(encodedItems)}`);
   }
 
-  if (isInitializing || isLoading) {
+  if (isInitializing || (isLoading && !initialLoadDone.current)) {
     return (
       <main className="px-inline py-block">
         <section className="mb-8 skeleton-panel" />
@@ -287,13 +299,13 @@ export default function CartPage() {
                 className="absolute left-[16.6667%] top-[20px] h-[5px] rounded-full bg-[linear-gradient(90deg,var(--color-tertiary),var(--color-accent))] transition-all duration-medium"
                 style={{ width: `calc(66.6666% * ${cartStepProgress / 100})` }}
               />
-              <div
-                className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 rounded-full border border-white/65 bg-surface p-1 shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
+              <img
+                src="/logo.jpg"
+                alt=""
+                className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 rounded-full border-2 border-white/65 object-cover shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
                 style={{ left: `calc(16.6667% + 66.6666% * ${cartStepProgress / 100})` }}
                 aria-hidden="true"
-              >
-                <img src="/logo.jpg" alt="" className="h-full w-full rounded-full object-cover" />
-              </div>
+              />
             </div>
           </div>
         </div>

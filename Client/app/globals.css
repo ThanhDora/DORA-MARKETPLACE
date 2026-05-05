@@ -1315,7 +1315,39 @@ html[data-theme="dark"] {
   }
 
   .search-suggestions__all {
-    @apply bg-neutral text-center font-extrabold;
+    @apply relative mt-2 overflow-hidden rounded-lg border-0 text-center font-extrabold transition-all;
+    background: linear-gradient(135deg, rgba(100, 210, 255, 0.15), rgba(0, 122, 255, 0.1));
+  }
+
+  .search-suggestions__all::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity rounded-lg;
+    background: linear-gradient(135deg, var(--color-accent), var(--color-tertiary));
+  }
+
+  .search-suggestions__all:hover::after {
+    opacity: 0.12;
+  }
+
+  .search-suggestions__all:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.12);
+  }
+
+  .search-suggestions li.search-suggestions__all > a {
+    @apply relative z-10 flex items-center justify-center gap-3 px-5 py-3.5 text-sm tracking-wide;
+    color: var(--color-tertiary);
+  }
+
+  .search-suggestions__all-arrow {
+    @apply grid h-7 w-7 place-items-center rounded-full transition-all;
+    background: var(--color-tertiary);
+    color: white;
+  }
+
+  .search-suggestions__all:hover .search-suggestions__all-arrow {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
   }
 
   .product-card-grid {

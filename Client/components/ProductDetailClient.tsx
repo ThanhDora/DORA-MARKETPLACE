@@ -24,44 +24,6 @@ type ProductDetailClientProps = {
   initialAverageRating: number;
 };
 
-type ProductDetailCachePayload = {
-  slug: string;
-  product: StoreProduct;
-  reviews: Review[];
-  averageRating: number;
-  reviewsCount: number;
-  cachedAt: number;
-};
-
-const PRODUCT_DETAIL_CACHE_PREFIX = "dora-product-detail-cache:";
-
-function readProductDetailCache(slug: string) {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(`${PRODUCT_DETAIL_CACHE_PREFIX}${slug}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as ProductDetailCachePayload;
-    return parsed?.slug === slug ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeProductDetailCache(payload: ProductDetailCachePayload) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(`${PRODUCT_DETAIL_CACHE_PREFIX}${payload.slug}`, JSON.stringify(payload));
-  } catch {
-    // Ignore cache write failures.
-  }
-}
-
 function ProductGallery({ product }: { product: StoreProduct }) {
   const images = product.images.filter(Boolean);
   return (
@@ -149,32 +111,6 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
     });
     trackedViewRef.current = false;
   }, [initialAverageRating, initialReviews, product]);
-
-  useEffect(() => {
-    const cached = readProductDetailCache(product.slug);
-    if (!cached) return;
-
-    setCurrentProduct(cached.product);
-    setReviews(cached.reviews);
-    setLocalMetrics((current) => ({
-      stock: cached.product.stock ?? current.stock,
-      viewCount: cached.product.viewCount ?? current.viewCount,
-      soldCount: cached.product.soldCount ?? current.soldCount,
-      rating: cached.averageRating ?? current.rating,
-      reviewsCount: cached.reviewsCount ?? current.reviewsCount,
-    }));
-  }, [product.slug]);
-
-  useEffect(() => {
-    writeProductDetailCache({
-      slug: currentProduct.slug,
-      product: currentProduct,
-      reviews,
-      averageRating,
-      reviewsCount,
-      cachedAt: Date.now(),
-    });
-  }, [averageRating, currentProduct, reviews, reviewsCount]);
 
   const refreshMetrics = useCallback(async () => {
     if (!isNumericProductId) return;

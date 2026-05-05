@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatCurrency, isNumericId, requestJson, type ApiEnvelope } from "@/lib/api";
+import { formatCurrency, isNumericId, requestJson, safeImageUrls, type ApiEnvelope } from "@/lib/api";
 
 type Suggestion = {
   id: number;
@@ -42,8 +42,9 @@ export function SearchInput({
     }
     try {
       const res = await requestJson<ApiEnvelope<Suggestion[]>>(`/products/suggestions?q=${encodeURIComponent(q)}&limit=8`);
-      setSuggestions(res.data ?? []);
-      setIsOpen((res.data ?? []).length > 0);
+      const normalized = (res.data ?? []).map((s) => ({ ...s, images: safeImageUrls(s.images) }));
+      setSuggestions(normalized);
+      setIsOpen(normalized.length > 0);
       setActiveIndex(-1);
     } catch {
       setSuggestions([]);
@@ -157,7 +158,10 @@ export function SearchInput({
           ))}
           <li className="search-suggestions__all">
             <Link href={`/catalog?search=${encodeURIComponent(query)}${categoryIdFilter ? `&categoryId=${encodeURIComponent(categoryIdFilter)}` : ""}`} onClick={() => setIsOpen(false)}>
-              Xem tất cả kết quả cho &quot;{query}&quot;
+              <span>Xem tất cả kết quả cho &quot;{query}&quot;</span>
+              <span className="search-suggestions__all-arrow">
+                <ArrowRight size={14} strokeWidth={2.5} />
+              </span>
             </Link>
           </li>
         </ul>
