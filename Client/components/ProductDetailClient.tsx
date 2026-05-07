@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BadgeCheck, ChevronRight, Download, Eye, MessageSquare, ShieldCheck, Star } from "lucide-react";
+import { BadgeCheck, Download, Eye, MessageSquare, ShieldCheck, Star, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProductPurchasePanel } from "@/components/ProductPurchasePanel";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtime } from "@/components/RealtimeProvider";
 import { useToast } from "@/components/ToastProvider";
 import {
-  formatCurrency,
   isNumericId,
   productTypeLabel,
   type ApiEnvelope,
@@ -36,10 +35,7 @@ type ProductDetailCachePayload = {
 const PRODUCT_DETAIL_CACHE_PREFIX = "dora-product-detail-cache:";
 
 function readProductDetailCache(slug: string) {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(`${PRODUCT_DETAIL_CACHE_PREFIX}${slug}`);
     if (!raw) return null;
@@ -51,50 +47,54 @@ function readProductDetailCache(slug: string) {
 }
 
 function writeProductDetailCache(payload: ProductDetailCachePayload) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
+  if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(`${PRODUCT_DETAIL_CACHE_PREFIX}${payload.slug}`, JSON.stringify(payload));
+    window.sessionStorage.setItem(
+      `${PRODUCT_DETAIL_CACHE_PREFIX}${payload.slug}`,
+      JSON.stringify(payload),
+    );
   } catch {
-    // Ignore cache write failures.
+    // ignore
   }
 }
 
 function ProductGallery({ product }: { product: StoreProduct }) {
   const images = product.images.filter(Boolean);
+  const [active, setActive] = useState(0);
+  const src = images[active] ?? null;
+
   return (
-    <div className="grid gap-3.5">
-      <div className="grid place-items-center overflow-hidden text-primary bg-neutral border border-border rounded-md transition-all hover:border-tertiary/35 min-h-[clamp(280px,45vw,560px)]">
-        {images[0] ? (
+    <div className="pd-gallery">
+      <div className="pd-gallery__main">
+        {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={images[0]}
+            src={src}
             alt={product.name}
             loading="eager"
             decoding="async"
             fetchPriority="high"
             onError={(e) => { e.currentTarget.src = "/marketplace-console.svg"; }}
-            className="block h-full w-full object-contain"
+            className="pd-gallery__img"
           />
         ) : (
-          <span>{product.type}</span>
+          <span className="pd-gallery__placeholder">{product.type}</span>
         )}
       </div>
+
       {images.length > 1 ? (
-        <div className="grid grid-cols-4 gap-3">
-          {images.slice(0, 4).map((image, index) => (
-            <div key={`${image}-${index}`} className="aspect-square grid place-items-center overflow-hidden text-primary bg-neutral border border-border rounded-md transition-all hover:border-tertiary/35">
+        <div className="pd-gallery__thumbs">
+          {images.slice(0, 5).map((img, i) => (
+            <button
+              key={`${img}-${i}`}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`pd-gallery__thumb${i === active ? " is-active" : ""}`}
+              aria-label={`Ảnh ${i + 1}`}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image}
-                alt={`${product.name} ${index + 1}`}
-                loading="lazy"
-                decoding="async"
-                className="block h-full w-full object-contain"
-              />
-            </div>
+              <img src={img} alt="" loading="lazy" />
+            </button>
           ))}
         </div>
       ) : null}
@@ -102,15 +102,23 @@ function ProductGallery({ product }: { product: StoreProduct }) {
   );
 }
 
-export function ProductDetailClient({ product, initialReviews, initialAverageRating }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  initialReviews,
+  initialAverageRating,
+}: ProductDetailClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, apiFetch } = useAuth();
   const { productMetrics, reviewVersionByProduct, productUpdates } = useRealtime();
   const { showToast } = useToast();
+
   const [currentProduct, setCurrentProduct] = useState<StoreProduct>(product);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewTotalPages, setReviewTotalPages] = useState(1);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [pendingRating, setPendingRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -121,6 +129,7 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
     rating: initialAverageRating ?? product.rating,
     reviewsCount: product.reviewsCount,
   });
+
   const trackedViewRef = useRef(false);
   const productId = currentProduct.id;
   const isNumericProductId = isNumericId(productId);
@@ -154,15 +163,14 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
   useEffect(() => {
     const cached = readProductDetailCache(product.slug);
     if (!cached) return;
-
     setCurrentProduct(cached.product);
     setReviews(cached.reviews);
-    setLocalMetrics((current) => ({
-      stock: cached.product.stock ?? current.stock,
-      viewCount: cached.product.viewCount ?? current.viewCount,
-      soldCount: cached.product.soldCount ?? current.soldCount,
-      rating: cached.averageRating ?? current.rating,
-      reviewsCount: cached.reviewsCount ?? current.reviewsCount,
+    setLocalMetrics((c) => ({
+      stock: cached.product.stock ?? c.stock,
+      viewCount: cached.product.viewCount ?? c.viewCount,
+      soldCount: cached.product.soldCount ?? c.soldCount,
+      rating: cached.averageRating ?? c.rating,
+      reviewsCount: cached.reviewsCount ?? c.reviewsCount,
     }));
   }, [product.slug]);
 
@@ -190,70 +198,86 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
           _count?: { reviews?: number };
         }>
       >(`/products/${productId}`, { notifySuccess: false });
-      setCurrentProduct((current) => ({
-        ...current,
-        stock: response.data.stock ?? current.stock,
-        viewCount: response.data.viewCount ?? current.viewCount,
-        soldCount: response.data.soldCount ?? current.soldCount,
-        rating: response.data.averageRating ?? current.rating,
-        reviewsCount: response.data._count?.reviews ?? current.reviewsCount,
+      const d = response.data;
+      setCurrentProduct((c) => ({
+        ...c,
+        stock: d.stock ?? c.stock,
+        viewCount: d.viewCount ?? c.viewCount,
+        soldCount: d.soldCount ?? c.soldCount,
+        rating: d.averageRating ?? c.rating,
+        reviewsCount: d._count?.reviews ?? c.reviewsCount,
       }));
-      setLocalMetrics((current) => ({
-        stock: response.data.stock ?? current.stock,
-        viewCount: response.data.viewCount ?? current.viewCount,
-        soldCount: response.data.soldCount ?? current.soldCount,
-        rating: response.data.averageRating ?? current.rating,
-        reviewsCount: response.data._count?.reviews ?? current.reviewsCount,
+      setLocalMetrics((c) => ({
+        stock: d.stock ?? c.stock,
+        viewCount: d.viewCount ?? c.viewCount,
+        soldCount: d.soldCount ?? c.soldCount,
+        rating: d.averageRating ?? c.rating,
+        reviewsCount: d._count?.reviews ?? c.reviewsCount,
       }));
     } catch {
-      // Keep current metrics if request fails.
+      // keep current
     }
   }, [apiFetch, isNumericProductId, productId]);
 
   const loadReviews = useCallback(async () => {
     if (!isNumericProductId) return;
-
     setIsLoadingReviews(true);
     try {
-      const response = await apiFetch<ApiEnvelope<ReviewListData>>(`/reviews/product/${productId}`, {
-        notifySuccess: false,
-      });
+      const response = await apiFetch<ApiEnvelope<ReviewListData>>(
+        `/reviews/product/${productId}?page=1&limit=10`,
+        { notifySuccess: false },
+      );
       const nextReviews = response.data.data ?? [];
+      const total = response.data.pagination?.total ?? nextReviews.length;
       setReviews(nextReviews);
-      setLocalMetrics((current) => ({
-        ...current,
-        rating: response.data.stats?.averageRating ?? current.rating,
-        reviewsCount: response.data.pagination?.total ?? nextReviews.length,
+      setReviewPage(1);
+      setReviewTotalPages(Math.ceil(total / 10));
+      setLocalMetrics((c) => ({
+        ...c,
+        rating: response.data.stats?.averageRating ?? c.rating,
+        reviewsCount: total,
       }));
     } catch {
-      // Keep current reviews if request fails.
+      // keep current
     } finally {
       setIsLoadingReviews(false);
     }
   }, [apiFetch, isNumericProductId, productId]);
 
+  const loadMoreReviews = useCallback(async () => {
+    if (!isNumericProductId || isLoadingMore) return;
+    const nextPage = reviewPage + 1;
+    setIsLoadingMore(true);
+    try {
+      const response = await apiFetch<ApiEnvelope<ReviewListData>>(
+        `/reviews/product/${productId}?page=${nextPage}&limit=10`,
+        { notifySuccess: false },
+      );
+      const more = response.data.data ?? [];
+      setReviews((c) => [...c, ...more]);
+      setReviewPage(nextPage);
+    } catch {
+      // keep current
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [apiFetch, isLoadingMore, isNumericProductId, productId, reviewPage]);
+
   useEffect(() => {
     if (!isNumericProductId || trackedViewRef.current) return;
     trackedViewRef.current = true;
-
-    apiFetch<
-      ApiEnvelope<{
-        productId: string;
-        viewCount: number;
-        soldCount: number;
-        stock: number;
-        rating: number;
-        reviewsCount: number;
-      }>
-    >(`/products/${productId}/view`, { method: "POST", notifySuccess: false })
-      .then((response) => {
-        const data = response.data;
-        setLocalMetrics((current) => ({
-          stock: data.stock ?? current.stock,
-          viewCount: data.viewCount ?? current.viewCount,
-          soldCount: data.soldCount ?? current.soldCount,
-          rating: data.rating ?? current.rating,
-          reviewsCount: data.reviewsCount ?? current.reviewsCount,
+    apiFetch<ApiEnvelope<{ productId: string; viewCount: number; soldCount: number; stock: number; rating: number; reviewsCount: number }>>(
+      `/products/${productId}/view`,
+      { method: "POST", notifySuccess: false },
+    )
+      .then((r) => {
+        const d = r.data;
+        setLocalMetrics((c) => ({
+          stock: d.stock ?? c.stock,
+          viewCount: d.viewCount ?? c.viewCount,
+          soldCount: d.soldCount ?? c.soldCount,
+          rating: d.rating ?? c.rating,
+          reviewsCount: d.reviewsCount ?? c.reviewsCount,
         }));
       })
       .catch(() => undefined);
@@ -267,8 +291,8 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
   useEffect(() => {
     const update = productUpdates[productId];
     if (!update) return;
-    setCurrentProduct((current) => ({
-      ...current,
+    setCurrentProduct((c) => ({
+      ...c,
       ...(update.images ? { images: update.images } : {}),
       ...(update.name ? { name: update.name } : {}),
       ...(update.price !== undefined ? { price: update.price } : {}),
@@ -280,16 +304,12 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
 
   useEffect(() => {
     if (!isNumericProductId) return;
-    const timer = window.setInterval(() => {
-      refreshMetrics();
-    }, 8000);
+    const timer = window.setInterval(() => refreshMetrics(), 8000);
     return () => window.clearInterval(timer);
   }, [isNumericProductId, refreshMetrics]);
 
   async function submitReview() {
-    if (isSubmittingReview) {
-      return;
-    }
+    if (isSubmittingReview) return;
     if (!isAuthenticated) {
       showToast("Đăng nhập để gửi đánh giá.", "error");
       router.push(`/login?next=${encodeURIComponent(pathname || `/products/${currentProduct.slug}`)}`);
@@ -300,7 +320,7 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
       return;
     }
     if (pendingRating <= 0) {
-      showToast("Vui lòng chọn số sao trước khi gửi đánh giá.", "error");
+      showToast("Vui lòng chọn số sao trước khi gửi.", "error");
       return;
     }
     setIsSubmittingReview(true);
@@ -308,144 +328,174 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
       const response = await apiFetch<ApiEnvelope<Review>>("/reviews", {
         method: "POST",
         notifySuccess: false,
-        body: JSON.stringify({
-          productId,
-          rating: pendingRating,
-          content: reviewText.trim(),
-        }),
+        body: JSON.stringify({ productId, rating: pendingRating, content: reviewText.trim() }),
       });
-
       setPendingRating(0);
       setReviewText("");
-      setReviews((current) => [response.data, ...current].slice(0, 10));
-      setLocalMetrics((current) => ({
-        ...current,
-        reviewsCount: current.reviewsCount + 1,
-      }));
-      showToast("Đã gửi đánh giá thành công.", "success");
+      setReviews((c) => [response.data, ...c].slice(0, 10));
+      setLocalMetrics((c) => ({ ...c, reviewsCount: c.reviewsCount + 1 }));
+      showToast("Đã gửi đánh giá.", "success");
       loadReviews();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Không thể gửi đánh giá.", "error");
+      const msg = error instanceof Error ? error.message : "Không thể gửi đánh giá.";
+      const isNotPurchased = msg.includes("mua sản phẩm") || msg.includes("403");
+      const isAlreadyReviewed = msg.includes("đã đánh giá");
+      if (isNotPurchased) {
+        showToast("Bạn cần mua sản phẩm này trước khi đánh giá.", "error");
+      } else if (isAlreadyReviewed) {
+        showToast("Bạn đã đánh giá sản phẩm này rồi.", "error");
+      } else {
+        showToast(msg, "error");
+      }
     } finally {
       setIsSubmittingReview(false);
     }
   }
 
   return (
-    <section className="product-detail product-detail--commerce">
-      <div className="product-detail__main">
-        <nav className="flex items-center gap-2 mb-[22px] text-secondary text-sm font-bold" aria-label="Đường dẫn">
-          <Link href="/catalog">Sản phẩm</Link>
-          <ChevronRight size={14} />
-          <Link href={`/catalog?type=${currentProduct.type}`}>{productTypeLabel(currentProduct.type)}</Link>
+    <div className="pd-layout">
+      {/* ── Left: main content ── */}
+      <div className="pd-main">
+
+        {/* Breadcrumb */}
+        <nav className="pd-breadcrumb" aria-label="Đường dẫn">
+          <Link href="/catalog" className="pd-breadcrumb__link">Sản phẩm</Link>
+          <span className="pd-breadcrumb__sep" aria-hidden="true">/</span>
+          <Link href={`/catalog?type=${currentProduct.type}`} className="pd-breadcrumb__link">
+            {productTypeLabel(currentProduct.type)}
+          </Link>
+          <span className="pd-breadcrumb__sep" aria-hidden="true">/</span>
+          <span className="pd-breadcrumb__current">{currentProduct.name}</span>
         </nav>
 
+        {/* Gallery */}
         <ProductGallery product={currentProduct} />
 
-        <div className="py-8">
-          <p className="m-0 mb-[14px] text-secondary text-[13px] font-extrabold tracking-normal uppercase">{productTypeLabel(currentProduct.type)} · {currentProduct.status}</p>
-          <h1>{currentProduct.name}</h1>
-          <p>{currentProduct.description}</p>
-          <div className="flex flex-wrap gap-2.5 mt-6">
-            <span>
-              <Star size={14} fill="currentColor" className="text-yellow-500" />
+        {/* Title + meta */}
+        <div className="pd-info">
+          <p className="pd-info__eyebrow">
+            <span className="pd-info__type-badge">{productTypeLabel(currentProduct.type)}</span>
+            <span className="pd-info__status-badge">{currentProduct.status === "APPROVED" ? "Đã duyệt" : currentProduct.status}</span>
+          </p>
+          <h1 className="pd-info__title">{currentProduct.name}</h1>
+          <p className="pd-info__desc">{currentProduct.description}</p>
+
+          <div className="pd-info__stats">
+            <span className="pd-info__stat">
+              <Star size={13} fill="currentColor" className="star-yellow" />
               {ratingLabel} · {reviewsCount} đánh giá
             </span>
-            <span>
-              <Eye size={14} />
+            <span className="pd-info__stat-sep" aria-hidden="true">·</span>
+            <span className="pd-info__stat">
+              <Eye size={13} />
               {viewCount} lượt xem
             </span>
-            <span>
-              <Download size={14} />
+            <span className="pd-info__stat-sep" aria-hidden="true">·</span>
+            <span className="pd-info__stat">
+              <Download size={13} />
               {soldCount} đã bán
             </span>
           </div>
         </div>
 
-        <div className="mt-4 p-[clamp(20px,2.6vw,28px)] bg-surface border border-card-border rounded-lg shadow-[0_10px_34px_rgba(0,0,0,0.045)] transition-all hover:border-tertiary/25 grid sm:grid-cols-3 gap-grid-gap">
-          <article>
-            <BadgeCheck size={20} />
-            <h3>Người bán</h3>
-            <p>{currentProduct.sellerName ?? "Người bán"} đã đăng sản phẩm qua quy trình duyệt của hệ thống.</p>
-          </article>
-          <article>
-            <ShieldCheck size={20} />
-            <h3>Bàn giao</h3>
-            <p>Đơn hàng trừ kho realtime và được xử lý ngay sau khi thanh toán bằng ví web.</p>
-          </article>
-          <article>
-            <MessageSquare size={20} />
-            <h3>Hỗ trợ</h3>
-            <p>Chat và AI support đã có API, có thể bật Socket.IO cho support realtime ở phase tiếp theo.</p>
-          </article>
+        {/* Trust block */}
+        <div className="pd-trust">
+          <div className="pd-trust__item">
+            <BadgeCheck size={18} className="pd-trust__icon" />
+            <div>
+              <p className="pd-trust__title">Người bán xác thực</p>
+              <p className="pd-trust__desc">{currentProduct.sellerName ?? "Người bán"} đăng sản phẩm qua quy trình duyệt của hệ thống.</p>
+            </div>
+          </div>
+          <div className="pd-trust__item">
+            <ShieldCheck size={18} className="pd-trust__icon" />
+            <div>
+              <p className="pd-trust__title">Bàn giao tức thì</p>
+              <p className="pd-trust__desc">Đơn hàng trừ kho realtime và xử lý ngay sau khi thanh toán bằng ví.</p>
+            </div>
+          </div>
+          <div className="pd-trust__item">
+            <MessageSquare size={18} className="pd-trust__icon" />
+            <div>
+              <p className="pd-trust__title">Hỗ trợ sẵn sàng</p>
+              <p className="pd-trust__desc">Liên hệ người bán trực tiếp hoặc qua hệ thống hỗ trợ của marketplace.</p>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 p-[clamp(20px,2.6vw,28px)] bg-surface border border-card-border rounded-lg shadow-[0_10px_34px_rgba(0,0,0,0.045)] transition-all hover:border-tertiary/25">
-          <h2>Thông tin sản phẩm</h2>
-          <dl className="grid gap-3.5 m-0">
-            <div>
-              <dt>Giá</dt>
-              <dd>{formatCurrency(currentProduct.price)}</dd>
-            </div>
-            <div>
+        {/* Spec table */}
+        <div className="pd-spec">
+          <p className="pd-spec__label">Thông tin sản phẩm</p>
+          <dl className="pd-spec__dl">
+            <div className="pd-spec__row">
               <dt>Loại</dt>
               <dd>{productTypeLabel(currentProduct.type)}</dd>
             </div>
-            <div>
+            <div className="pd-spec__row">
               <dt>Danh mục</dt>
               <dd>{currentProduct.categoryName ?? "Chưa phân loại"}</dd>
             </div>
-            <div>
+            <div className="pd-spec__row">
+              <dt>Người bán</dt>
+              <dd>{currentProduct.sellerName ?? "Marketplace"}</dd>
+            </div>
+            <div className="pd-spec__row">
               <dt>Tồn kho</dt>
-              <dd>{currentStock}</dd>
+              <dd className={currentStock > 0 ? "pd-spec__stock--live" : "pd-spec__stock--out"}>
+                {currentStock > 0 ? `${currentStock} sản phẩm` : "Hết hàng"}
+              </dd>
             </div>
           </dl>
         </div>
 
-        <div className="mt-4 p-[clamp(20px,2.6vw,28px)] bg-surface border border-card-border rounded-lg shadow-[0_10px_34px_rgba(0,0,0,0.045)] transition-all hover:border-tertiary/25">
-          <div className="grid justify-items-start mb-[34px] grid grid-cols-[minmax(0,1fr)_auto] gap-5 items-end mb-[18px]">
+        {/* Reviews */}
+        <div className="pd-reviews">
+          <div className="pd-reviews__head">
             <div>
-              <p className="m-0 mb-[14px] text-secondary text-[13px] font-extrabold tracking-normal uppercase">Đánh giá</p>
-              <h2>Đánh giá gần đây</h2>
+              <p className="pd-spec__label">Đánh giá</p>
+              <h2 className="pd-reviews__title">
+                <Star size={16} fill="currentColor" className="pd-reviews__title-star star-yellow" />
+                {ratingLabel}
+                <span className="pd-reviews__title-count">({reviewsCount} đánh giá)</span>
+              </h2>
             </div>
-            <Link href={`/catalog?type=${currentProduct.type}`} className="inline-flex min-h-[40px] items-center text-secondary text-sm font-bold hover:text-primary">
-              Sản phẩm tương tự
+            <Link href={`/catalog?type=${currentProduct.type}`} className="pd-reviews__similar">
+              Sản phẩm tương tự →
             </Link>
           </div>
 
-          <div className="grid gap-3.5 p-3.5 bg-neutral border border-border rounded-md mb-4">
-            <p className="m-0 font-bold">Chọn sao để đánh giá</p>
-            <div className="flex items-center gap-1.5">
-              {[1, 2, 3, 4, 5].map((value) => (
+          {/* Review form */}
+          <div className="pd-review-form">
+            <p className="pd-review-form__heading">Gửi đánh giá của bạn</p>
+            <div className="pd-review-form__stars">
+              {[1, 2, 3, 4, 5].map((v) => (
                 <button
-                  key={value}
+                  key={v}
                   type="button"
-                  className="inline-grid h-8 w-8 place-items-center rounded-md border border-border bg-surface text-secondary hover:text-tertiary hover:border-tertiary/40"
-                  onClick={() => setPendingRating(value)}
+                  className={`pd-review-form__star-btn${v <= pendingRating ? " is-active" : ""}`}
+                  onClick={() => setPendingRating(v)}
                   disabled={isSubmittingReview}
+                  aria-label={`${v} sao`}
                 >
-                  <Star
-                    size={16}
-                    className={value <= pendingRating ? "text-yellow-500" : ""}
-                    fill={value <= pendingRating ? "currentColor" : "none"}
-                  />
+                  <Star size={18} fill={v <= pendingRating ? "currentColor" : "none"} />
                 </button>
               ))}
-              <span className="ml-1 text-sm font-bold">
-                {isSubmittingReview ? "Đang gửi..." : `${pendingRating}/5`}
+              <span className="pd-review-form__star-label">
+                {pendingRating > 0 ? `${pendingRating}/5` : "Chọn sao"}
               </span>
             </div>
             <textarea
-              rows={4}
+              rows={3}
               value={reviewText}
-              onChange={(event) => setReviewText(event.target.value)}
-              placeholder="Viết thêm nhận xét của bạn (không bắt buộc)"
-              className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm text-primary focus:border-tertiary/40 focus:outline-none"
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Nhận xét của bạn (không bắt buộc)"
+              className="pd-review-form__textarea"
+              disabled={isSubmittingReview}
             />
-            <div className="flex justify-end">
+            <div className="pd-review-form__footer">
               <button
                 type="button"
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-on-accent bg-tertiary border border-tertiary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                className="pd-review-form__submit"
                 onClick={submitReview}
                 disabled={isSubmittingReview}
               >
@@ -454,29 +504,75 @@ export function ProductDetailClient({ product, initialReviews, initialAverageRat
             </div>
           </div>
 
-          {isLoadingReviews ? <p>Đang tải đánh giá...</p> : null}
-          {reviews.length ? (
-            <div className="grid gap-3.5">
-              {reviews.slice(0, 10).map((review) => (
-                <article key={review.id} className="p-3.5 bg-neutral border border-transparent rounded-md transition-all hover:bg-surface hover:border-border hover:-translate-y-[1px]">
-                  <div className="flex items-center justify-between gap-3">
-                    <strong>{review.user?.name ?? "Người mua"}</strong>
-                    <span className="flex items-center gap-1 text-sm font-bold">
-                      <Star size={14} fill="currentColor" className="text-yellow-500" />
-                      {review.rating}/5
-                    </span>
-                  </div>
-                  {review.content?.trim() ? <p>{review.content}</p> : null}
-                </article>
-              ))}
-            </div>
+          {/* Review list */}
+          {isLoadingReviews ? (
+            <p className="pd-reviews__loading">Đang tải đánh giá...</p>
+          ) : reviews.length ? (
+            <>
+              <div className="pd-review-list">
+                {reviews.map((review) => {
+                  const name = review.user?.name ?? "Người mua";
+                  const initials = name.split(" ").filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+                  const avatar = review.user?.avatar;
+                  return (
+                    <article key={review.id} className="pd-review-item">
+                      <div className="pd-review-item__top">
+                        {/* Avatar */}
+                        <div className="pd-review-item__avatar">
+                          {avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={avatar} alt={name} className="pd-review-item__avatar-img" />
+                          ) : (
+                            <span className="pd-review-item__avatar-initials">{initials}</span>
+                          )}
+                        </div>
+
+                        {/* Name + rating + content */}
+                        <div className="pd-review-item__body">
+                          <div className="pd-review-item__header">
+                            <strong className="pd-review-item__name">{name}</strong>
+                            <span className="pd-review-item__rating">
+                              {[1,2,3,4,5].map((s) => (
+                                <Star
+                                  key={s}
+                                  size={11}
+                                  fill={s <= review.rating ? "currentColor" : "none"}
+                                  className={s <= review.rating ? "star-yellow" : "pd-review-item__star-empty"}
+                                />
+                              ))}
+                            </span>
+                          </div>
+                          {review.content?.trim() ? (
+                            <p className="pd-review-item__content">{review.content}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {reviewPage < reviewTotalPages ? (
+                <button
+                  type="button"
+                  className="pd-reviews__load-more"
+                  onClick={loadMoreReviews}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? "Đang tải..." : `Xem thêm đánh giá (${reviewsCount - reviews.length} còn lại)`}
+                </button>
+              ) : reviews.length >= 10 ? (
+                <p className="pd-reviews__all-loaded">Đã hiển thị tất cả {reviews.length} đánh giá</p>
+              ) : null}
+            </>
           ) : (
-            <p>Chưa có đánh giá. Hãy là người mua đầu tiên để để lại đánh giá.</p>
+            <p className="pd-reviews__empty">Chưa có đánh giá. Hãy là người đầu tiên.</p>
           )}
         </div>
       </div>
 
+      {/* ── Right: purchase panel ── */}
       <ProductPurchasePanel product={{ ...currentProduct, stock: currentStock }} />
-    </section>
+    </div>
   );
 }

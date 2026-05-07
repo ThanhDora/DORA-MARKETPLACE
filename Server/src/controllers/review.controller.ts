@@ -109,7 +109,10 @@ export const createReview = async (req: Request, res: Response) => {
   const hasPurchased = await prisma.orderItem.findFirst({
     where: {
       productId: Number(productId),
-      order: { userId, status: { in: ['PAID', 'DELIVERING', 'DELIVERED'] } },
+      order: {
+        userId,
+        status: { notIn: ['PENDING', 'CANCELLED', 'FAILED'] },
+      },
     },
   });
   if (!hasPurchased) throw ApiError.forbidden('Bạn cần mua sản phẩm trước khi đánh giá');

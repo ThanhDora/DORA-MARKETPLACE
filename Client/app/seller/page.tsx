@@ -648,16 +648,56 @@ export default function SellerPage() {
       ) : null}
 
       {activeTab === "orders" ? (
-        <DashboardTable icon={<ReceiptText size={20} />} title="Đơn hàng">
-          {orders.map((order) => (
-            <tr key={order.id}>
-              <td>#{order.id}</td>
-              <td>{order.user?.email ?? "Người mua"}</td>
-              <td>{formatCurrency(order.totalAmount)}</td>
-              <td>{statusLabel(order.status)}</td>
-            </tr>
-          ))}
-        </DashboardTable>
+        <section className="bg-surface border border-card-border rounded-lg shadow-[0_10px_34px_rgba(0,0,0,0.045)] p-[clamp(20px,2.6vw,28px)] w-full">
+          <div className="flex items-center gap-[14px] mb-4">
+            <ReceiptText size={20} />
+            <h2>Đơn hàng ({orders.length})</h2>
+          </div>
+
+          {orders.length === 0 ? (
+            <div className="seller-product-empty">
+              <span className="seller-product-empty__icon"><ReceiptText size={24} /></span>
+              <strong className="text-[15px] font-extrabold text-primary block">Chưa có đơn hàng nào</strong>
+              <p>Đơn hàng sẽ xuất hiện ở đây khi khách mua sản phẩm của bạn.</p>
+            </div>
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Sản phẩm</th>
+                    <th>Người mua</th>
+                    <th>Doanh thu</th>
+                    <th>Ngày</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => {
+                    const item = order.items?.[0];
+                    const productName = item?.product?.name ?? "—";
+                    const sellerRevenue = item ? Number(item.price) * (item.quantity ?? 1) : Number(order.totalAmount);
+                    const rowKey = item?.id ?? `order-${order.id}`;
+                    const orderDate = order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString("vi-VN")
+                      : "—";
+                    return (
+                      <tr key={rowKey}>
+                        <td>#{order.id}</td>
+                        <td>{productName}</td>
+                        <td>{order.user?.email ?? order.user?.name ?? "Người mua"}</td>
+                        <td>{formatCurrency(sellerRevenue)}</td>
+                        <td>{orderDate}</td>
+                        <td>{statusLabel(order.status)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       ) : null}
 
       {activeTab === "payouts" ? (

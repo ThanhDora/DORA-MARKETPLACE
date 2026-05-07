@@ -78,9 +78,26 @@ export const listProducts = async (req: Request, res: Response) => {
     prisma.product.count({ where }),
   ]);
 
+  // Tính average rating cho tất cả sản phẩm trong trang
+  const productIds = products.map(p => p.id);
+  const ratingAggregates = await prisma.review.groupBy({
+    by: ['productId'],
+    where: { productId: { in: productIds } },
+    _avg: { rating: true },
+  });
+
+  const ratingMap = new Map(
+    ratingAggregates.map(r => [r.productId, Number(r._avg.rating) || 0])
+  );
+
+  const productsWithRating = products.map(p => ({
+    ...p,
+    averageRating: ratingMap.get(p.id) ?? 0,
+  }));
+
   res.set('X-Total-Count', String(total));
   res.set('X-Total-Pages', String(Math.ceil(total / take)));
-  sendList(res, products, { page: Number(page), limit: Number(limit), total });
+  sendList(res, productsWithRating, { page: Number(page), limit: Number(limit), total });
 };
 
 export const getProduct = async (req: Request, res: Response) => {

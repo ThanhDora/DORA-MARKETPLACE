@@ -62,34 +62,28 @@ export default async function HomePage() {
 
         <RealtimeFeaturedProductsSection initialProducts={products} />
 
-        <section className="cat-section px-inline py-block">
-          <div className="cat-section__head">
-            <span className="cat-section__label">Danh mục</span>
-            <h2 className="cat-section__title">Đi thẳng đến<br />loại sản phẩm cần mua</h2>
-            <Link href="/catalog" className="cat-section__all">
+        <section className="cat-v3 px-inline py-block">
+          <div className="cat-v3__head">
+            <span className="cat-v3__label">Danh mục</span>
+            <Link href="/catalog" className="cat-v3__see-all">
               Xem tất cả <span aria-hidden="true">→</span>
             </Link>
           </div>
 
-          <div className="cat-grid">
+          <div className="cat-v3__list">
             {categories.slice(0, 6).map((category, i) => (
               <Link
                 key={category.id}
                 href={`/catalog?categoryId=${category.id}`}
-                className="cat-card"
-                data-idx={i}
+                className="cat-v3__item"
                 style={{ "--cat-i": i } as React.CSSProperties}
               >
-                <span className="cat-card__num">0{i + 1}</span>
-                <span className="cat-card__ordinal" aria-hidden="true">0{i + 1}</span>
-                {category.icon ? (
-                  <span className="cat-card__icon" aria-hidden="true">{category.icon}</span>
-                ) : null}
-                <div className="cat-card__body">
-                  <strong className="cat-card__name">{category.name}</strong>
-                  <span className="cat-card__count">{category._count?.products ?? 0} sản phẩm</span>
-                </div>
-                <span className="cat-card__arrow" aria-hidden="true">→</span>
+                <span className="cat-v3__index" aria-hidden="true">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="cat-v3__name">{category.name}</span>
+                <span className="cat-v3__count">{category._count?.products ?? 0} sp</span>
+                <span className="cat-v3__arrow" aria-hidden="true">→</span>
               </Link>
             ))}
           </div>

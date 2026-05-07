@@ -23,6 +23,7 @@ export function ProductPurchasePanel({ product }: { product: StoreProduct }) {
   const [isBusy, setIsBusy] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
   const liveStock = stockUpdates[product.id] ?? product.stock;
   const liveRating = productMetrics[product.id]?.rating ?? product.rating;
   const liveReviewsCount = productMetrics[product.id]?.reviewsCount ?? product.reviewsCount;
@@ -45,14 +46,8 @@ export function ProductPurchasePanel({ product }: { product: StoreProduct }) {
   }, [apiFetch, isAuthenticated]);
 
   async function addToCart() {
-    if (!isAuthenticated) {
-      showToast("Đăng nhập để thêm vào giỏ.", "error");
-      return;
-    }
-    if (!isNumericId(product.id)) {
-      showToast("Sản phẩm demo, cần backend để thao tác.", "error");
-      return;
-    }
+    if (!isAuthenticated) { showToast("Đăng nhập để thêm vào giỏ.", "error"); return; }
+    if (!isNumericId(product.id)) { showToast("Sản phẩm demo, cần backend.", "error"); return; }
     setIsBusy(true);
     try {
       await apiFetch<ApiEnvelope<unknown>>("/cart/items", {
@@ -69,19 +64,13 @@ export function ProductPurchasePanel({ product }: { product: StoreProduct }) {
   }
 
   async function toggleWishlist() {
-    if (!isAuthenticated) {
-      showToast("Đăng nhập để lưu sản phẩm.", "error");
-      return;
-    }
-    if (!isNumericId(product.id)) {
-      showToast("Sản phẩm demo, cần backend để thao tác.", "error");
-      return;
-    }
+    if (!isAuthenticated) { showToast("Đăng nhập để lưu sản phẩm.", "error"); return; }
+    if (!isNumericId(product.id)) { showToast("Sản phẩm demo, cần backend.", "error"); return; }
     setIsBusy(true);
-    const wasWishlisted = isWishlisted;
-    setIsWishlisted(!wasWishlisted);
+    const was = isWishlisted;
+    setIsWishlisted(!was);
     try {
-      if (wasWishlisted) {
+      if (was) {
         await apiFetch<ApiEnvelope<unknown>>(`/wishlist/${product.id}`, { method: "DELETE" });
         showToast("Đã xóa khỏi yêu thích.", "success");
       } else {
@@ -92,99 +81,119 @@ export function ProductPurchasePanel({ product }: { product: StoreProduct }) {
         showToast("Đã lưu vào yêu thích.", "success");
       }
     } catch (error) {
-      setIsWishlisted(wasWishlisted);
-      showToast(error instanceof Error ? error.message : "Không thể lưu sản phẩm.", "error");
+      setIsWishlisted(was);
+      showToast(error instanceof Error ? error.message : "Không thể lưu.", "error");
     } finally {
       setIsBusy(false);
     }
   }
 
+  const walletState =
+    walletBalance === null ? "loading" :
+    walletBalance >= product.price ? "ok" : "low";
+
   return (
-    <aside className="checkout-card purchase-panel" aria-label="Tóm tắt mua hàng">
-      <div className="checkout-card__visual grid place-items-center overflow-hidden text-primary bg-neutral border border-border rounded-md transition-all hover:border-tertiary/35 product-visual--large">
+    <aside className="pp" aria-label="Mua hàng">
+      {/* Image */}
+      <div className="pp__visual">
         {product.images[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.images[0]} alt={product.name} />
+          <img src={product.images[0]} alt={product.name} className="pp__visual-img" />
         ) : (
-          <span>{product.type}</span>
+          <span className="pp__visual-placeholder">{product.type}</span>
         )}
       </div>
-      <p className="checkout-card__label">{productTypeLabel(product.type)} · bàn giao số</p>
-      <strong>{formatCurrency(product.price)}</strong>
-      <span>/{product.type.toLowerCase()}</span>
-      <dl>
-        <div>
+
+      {/* Type label */}
+      <p className="pp__type">{productTypeLabel(product.type)} · bàn giao số</p>
+
+      {/* Price */}
+      <div className="pp__price-row">
+        <strong className="pp__price">{formatCurrency(product.price)}</strong>
+        <span className="pp__unit">/{product.type.toLowerCase()}</span>
+      </div>
+
+      {/* Rating */}
+      <div className="pp__rating">
+        <Star size={13} fill="currentColor" className="pp__rating-star star-yellow" />
+        <span>{liveRating > 0 ? liveRating.toFixed(1) : "0"}</span>
+        <span className="pp__rating-count">· {liveReviewsCount} đánh giá</span>
+      </div>
+
+      {/* Details */}
+      <dl className="pp__dl">
+        <div className="pp__dl-row">
           <dt>Tồn kho</dt>
-          <dd>{isAvailable ? `${liveStock} sản phẩm` : "Hết hàng"}</dd>
+          <dd className={isAvailable ? "pp__dl-value--live" : "pp__dl-value--out"}>
+            {isAvailable ? `${liveStock} sản phẩm` : "Hết hàng"}
+          </dd>
         </div>
-        <div>
+        <div className="pp__dl-row">
           <dt>Người bán</dt>
           <dd>{product.sellerName ?? "Marketplace"}</dd>
         </div>
-        <div>
+        <div className="pp__dl-row">
           <dt>Thanh toán</dt>
           <dd>Ví web nội bộ</dd>
         </div>
       </dl>
-      <div className={`mt-2 rounded-[12px] border p-3 text-[12px] font-bold ${
-        walletBalance === null
-          ? "border-border bg-neutral text-secondary"
-          : walletBalance >= product.price
-            ? "border-success/30 bg-success/10 text-success"
-            : "border-danger/30 bg-danger/10 text-danger"
-      }`}>
-        <div className="flex items-center gap-1.5">
-          <Wallet size={14} />
-          <span>Số dư ví: {walletBalance !== null ? formatCurrency(walletBalance) : "Đang tải..."}</span>
-        </div>
-        {walletBalance === null ? (
-          <p className="m-0 mt-1 text-[11px]">Hệ thống sẽ kiểm tra số dư ví khi xác nhận checkout.</p>
-        ) : walletBalance < product.price ? (
-          <p className="m-0 mt-1 text-[11px]">Số dư chưa đủ cho sản phẩm này.</p>
-        ) : (
-          <p className="m-0 mt-1 text-[11px]">Đủ số dư để thanh toán ngay.</p>
+
+      {/* Wallet balance */}
+      <div className={`pp__wallet pp__wallet--${walletState}`}>
+        <Wallet size={13} />
+        <span>
+          {walletBalance !== null
+            ? formatCurrency(walletBalance)
+            : "Đang tải số dư..."}
+        </span>
+        {walletState === "low" && (
+          <span className="pp__wallet-note">· Chưa đủ số dư</span>
+        )}
+        {walletState === "ok" && (
+          <span className="pp__wallet-note">· Đủ để thanh toán</span>
         )}
       </div>
-      <div className="flex items-center gap-2 mt-4 text-sm font-bold text-secondary">
-        <Star size={14} fill="currentColor" className="text-yellow-500" />
-        <span>{liveRating > 0 ? liveRating.toFixed(1) : "0"} · {liveReviewsCount} đánh giá</span>
-      </div>
-      <div className="flex flex-col items-stretch gap-2.5 mt-5">
+
+      {/* Actions */}
+      <div className="pp__actions">
         {isAuthenticated ? (
           <Link
             href={checkoutHref}
-            className={isAvailable && hasEnoughWallet ? "inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-on-accent bg-tertiary border border-tertiary" : "inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-on-accent bg-tertiary border border-tertiary is-disabled"}
+            className={`pp__btn-primary${!isAvailable || !hasEnoughWallet ? " is-disabled" : ""}`}
             aria-disabled={!isAvailable || !hasEnoughWallet}
           >
-            <Zap size={17} />
+            <Zap size={15} />
             Mua ngay bằng ví
           </Link>
         ) : (
-          <Link href={`/login?next=${encodeURIComponent(checkoutHref)}`} className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-on-accent bg-tertiary border border-tertiary">
-            <LockKeyhole size={17} />
+          <Link
+            href={`/login?next=${encodeURIComponent(checkoutHref)}`}
+            className="pp__btn-primary"
+          >
+            <LockKeyhole size={15} />
             Đăng nhập để mua
           </Link>
         )}
-        <div className="grid grid-cols-[1fr_auto] gap-2.5">
-          <button
-            type="button"
-            className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-primary bg-transparent border border-border shadow-none hover:text-tertiary hover:border-tertiary/40 hover:bg-surface"
-            onClick={addToCart}
-            disabled={!isAvailable || isBusy}
-          >
-            <ShoppingCart size={17} />
-            Thêm vào giỏ
-          </button>
-          <button
-            type="button"
-            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-primary bg-transparent border border-border shadow-none hover:text-tertiary hover:border-tertiary/40 hover:bg-surface ${isWishlisted ? "wishlist-active" : ""}`}
-            onClick={toggleWishlist}
-            disabled={isBusy}
-          >
-            <Heart size={17} fill={isWishlisted ? "currentColor" : "none"} className={isWishlisted ? "heart-filled" : ""} />
-            {isWishlisted ? "Đã lưu" : "Lưu"}
-          </button>
-        </div>
+
+        <button
+          type="button"
+          className="pp__btn-secondary"
+          onClick={addToCart}
+          disabled={!isAvailable || isBusy}
+        >
+          <ShoppingCart size={15} />
+          Thêm vào giỏ
+        </button>
+
+        <button
+          type="button"
+          className={`pp__btn-wishlist${isWishlisted ? " is-active" : ""}`}
+          onClick={toggleWishlist}
+          disabled={isBusy}
+        >
+          <Heart size={15} fill={isWishlisted ? "currentColor" : "none"} />
+          {isWishlisted ? "Đã lưu vào yêu thích" : "Lưu vào yêu thích"}
+        </button>
       </div>
     </aside>
   );
