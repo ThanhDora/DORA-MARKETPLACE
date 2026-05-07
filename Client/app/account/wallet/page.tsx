@@ -4,9 +4,9 @@ import Link from "next/link";
 import { ArrowLeft, ArrowDownCircle, ArrowUpCircle, Banknote, CircleDollarSign, CreditCard, History, Loader2, Plus, RotateCw, Wallet, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   formatCurrency,
-  paymentMethodLabel,
   statusLabel,
   type ApiEnvelope,
   type ApiList,
@@ -20,6 +20,41 @@ import { useToast } from "@/components/ToastProvider";
 import { useRealtime } from "@/components/RealtimeProvider";
 
 const DEPOSIT_PRESETS = [100000, 200000, 500000, 1000000, 2000000, 5000000];
+
+function transactionIcon(type: string) {
+  return type === "DEPOSIT" || type === "SELLER_REVENUE" ? (
+    <ArrowDownCircle size={16} />
+  ) : (
+    <ArrowUpCircle size={16} />
+  );
+}
+
+function transactionLabel(type: string) {
+  return type === "DEPOSIT"
+    ? "Nạp tiền"
+    : type === "PAYMENT"
+      ? "Thanh toán"
+      : type === "SELLER_REVENUE"
+        ? "Doanh thu bán hàng"
+        : "Hoàn tiền";
+}
+
+const springEase: [number, number, number, number] = [0.19, 1, 0.22, 1];
+
+const stagger = {
+  animate: {
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: springEase },
+  },
+};
 
 export default function WalletPage() {
   const { isAuthenticated, isInitializing, apiFetch } = useAuth();
@@ -72,7 +107,6 @@ export default function WalletPage() {
     void loadWallet();
   }, [isAuthenticated, isInitializing, loadWallet]);
 
-  // Realtime: reload wallet when deposit completes
   useEffect(() => {
     if (!isAuthenticated || isInitializing || walletVersion === 0) return;
     void loadWallet();
@@ -99,7 +133,7 @@ export default function WalletPage() {
     QRCode.toCanvas(fallbackCanvasRef.current, depositQRSession.qrData.vietqrPayload, {
       width: 280,
       margin: 2,
-      color: { dark: "#0a1628", light: "#ffffff" },
+      color: { dark: "#1a1713", light: "#faf8f2" },
     });
   }, [depositQRSession, sepayQrFailed]);
 
@@ -115,13 +149,13 @@ export default function WalletPage() {
               setDepositQRSession(null);
               setDepositQRPaid(false);
               void loadWallet();
-            }, 1500);
+            }, 2000);
           }
         })
         .catch(() => undefined);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [apiFetch, depositQRSession, depositQRPaid]);
+  }, [apiFetch, depositQRSession, depositQRPaid, loadWallet]);
 
   async function handleDeposit() {
     if (depositAmount <= 0) {
@@ -140,7 +174,6 @@ export default function WalletPage() {
         body: JSON.stringify({ amount: depositAmount, paymentMethod: depositMethod }),
       });
 
-      // SEPAY / BANK_TRANSFER — show QR code
       if ((depositMethod === "SEPAY" || depositMethod === "BANK_TRANSFER") && response.data.qrData && response.data.transactionId) {
         setSepayQrFailed(false);
         setDepositQRSession({
@@ -185,268 +218,331 @@ export default function WalletPage() {
     }
   }
 
-  function transactionIcon(type: string) {
-    return type === "DEPOSIT" || type === "SELLER_REVENUE" ? <ArrowDownCircle size={16} className="text-success" /> : <ArrowUpCircle size={16} className="text-danger" />;
-  }
-
-  function transactionLabel(type: string) {
-    return type === "DEPOSIT" ? "Nạp tiền" : type === "PAYMENT" ? "Thanh toán" : type === "SELLER_REVENUE" ? "Doanh thu bán hàng" : "Hoàn tiền";
-  }
-
+  // ── Loading State ──
   if (isInitializing) {
-    return <main className="px-inline py-block"><div className="skeleton-panel" /></main>;
+    return (
+      <div className="wallet-loader">
+        <div className="wallet-loader__spinner" />
+        <p>Đang tải thông tin...</p>
+      </div>
+    );
   }
 
+  // ── Auth Gate ──
   if (!isAuthenticated) {
     return (
-      <main>
-        <section className="px-inline py-[clamp(58px,7vw,84px)] grid min-h-[calc(100svh-var(--header-height))] place-items-center content-center text-center">
+      <div className="wallet-gate">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
+        >
           <Wallet size={40} />
           <h1>Cần đăng nhập</h1>
           <p>Đăng nhập để xem ví và số dư của bạn.</p>
-          <Link href="/login?next=/account/wallet" className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md px-5 py-3 text-[15px] font-bold text-center shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-95 text-on-accent bg-tertiary border border-tertiary">
+          <Link href="/login?next=/account/wallet" className="wallet-gate__btn">
             Đăng nhập
           </Link>
-        </section>
-      </main>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Error State ──
+  if (error && !isLoading) {
+    return (
+      <div className="wallet-gate">
+        <Banknote size={36} />
+        <h1 style={{ fontSize: 22, color: "#d9706b" }}>{error}</h1>
+        <button type="button" onClick={loadWallet} className="wallet-gate__btn">
+          <RotateCw size={15} />
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
+  // ── Loading State ──
+  if (isLoading) {
+    return (
+      <div className="wallet-loader">
+        <div className="wallet-loader__spinner" />
+        <p>Đang tải thông tin ví...</p>
+      </div>
     );
   }
 
   return (
-    <main className="px-inline py-block">
-      <section className="flex flex-wrap items-center justify-between gap-[14px] mb-[34px]">
-        <div>
-          <Link href="/account" className="inline-flex items-center gap-1.5 mb-[14px] text-[13px] font-extrabold text-secondary hover:text-primary transition-colors">
-            <ArrowLeft size={16} />
-            Quay lại tài khoản
-          </Link>
-          <h1>Ví của tôi</h1>
-          <p>Quản lý số dư và lịch sử giao dịch.</p>
-        </div>
-      </section>
+    <motion.main
+      className="wallet-page"
+      initial="initial"
+      animate="animate"
+      variants={stagger}
+    >
+      {/* Header */}
+      <motion.div variants={fadeUp}>
+        <Link href="/account" className="wallet-page__back">
+          <ArrowLeft size={16} />
+          Quay lại tài khoản
+        </Link>
+        <h1>Ví của tôi</h1>
+        <p className="wallet-page__subtitle">Quản lý số dư và lịch sử giao dịch.</p>
+      </motion.div>
 
-      {error && !isLoading ? (
-        <section className="grid place-items-center py-16 text-center">
-          <Banknote size={36} />
-          <p className="text-danger font-bold mt-3">{error}</p>
-          <button type="button" onClick={loadWallet} className="inline-flex min-h-[44px] items-center gap-2 rounded-[13px] border border-border bg-surface px-5 text-[14px] font-extrabold text-primary transition-all hover:-translate-y-[1px] mt-4">
-            <RotateCw size={15} />
-            Thử lại
-          </button>
-        </section>
-      ) : isLoading ? (
-        <section className="grid place-items-center py-16">
-          <Loader2 size={36} className="spin-icon text-tertiary" />
-          <p className="mt-4 text-secondary font-bold">Đang tải thông tin ví...</p>
-        </section>
-      ) : (
-        <>
-          <section className="rounded-[24px] border border-card-border bg-surface p-[clamp(24px,3vw,36px)] shadow-soft mb-[var(--grid-gap)]">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-[13px] font-extrabold uppercase tracking-wide text-secondary mb-2 inline-flex items-center gap-1.5">
-                  <Wallet size={16} />
-                  Số dư khả dụng
-                </p>
-                <h2 className="text-[clamp(32px,4vw,48px)] font-black leading-none text-primary">
-                  {formatCurrency(wallet?.balance ?? 0)}
-                </h2>
-                <div className="flex flex-wrap gap-4 mt-4">
-                  <div className="flex items-center gap-2 text-[13px] font-bold text-secondary">
-                    <ArrowDownCircle size={14} className="text-success" />
-                    Đã nạp: <span className="text-primary">{formatCurrency(wallet?.totalDeposits ?? 0)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[13px] font-bold text-secondary">
-                    <ArrowUpCircle size={14} className="text-danger" />
-                    Đã chi: <span className="text-primary">{formatCurrency(wallet?.totalPayments ?? 0)}</span>
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-[14px] border border-tertiary bg-tertiary px-6 py-3 text-[15px] font-extrabold text-on-accent shadow-soft transition-all duration-fast hover:-translate-y-[2px] hover:shadow-hover active:translate-y-0 active:scale-[0.99]"
-                onClick={() => setShowDeposit(true)}
-              >
-                <Plus size={18} />
-                Nạp tiền
-              </button>
+      {/* Balance Card */}
+      <motion.section
+        className="wcard"
+        variants={fadeUp}
+        style={{ marginBottom: "var(--grid-gap)" }}
+      >
+        <div className="wcard__body">
+          <p className="wcard__label">
+            <Wallet size={14} aria-hidden="true" />
+            Số dư khả dụng
+          </p>
+          <motion.div
+            className="wcard__balance"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.19, 1, 0.22, 1] }}
+          >
+            {formatCurrency(wallet?.balance ?? 0)}
+          </motion.div>
+          <div className="wcard__stats">
+            <div className="wcard__stat wcard__stat--inflow">
+              <ArrowDownCircle size={13} aria-hidden="true" />
+              <span>Đã nạp</span>
+              <strong>{formatCurrency(wallet?.totalDeposits ?? 0)}</strong>
             </div>
-          </section>
+            <div className="wcard__stat wcard__stat--outflow">
+              <ArrowUpCircle size={13} aria-hidden="true" />
+              <span>Đã chi</span>
+              <strong>{formatCurrency(wallet?.totalPayments ?? 0)}</strong>
+            </div>
+          </div>
+        </div>
+        <motion.button
+          type="button"
+          className="wcard__deposit-btn"
+          onClick={() => setShowDeposit(true)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Plus size={17} aria-hidden="true" />
+          Nạp tiền
+        </motion.button>
+      </motion.section>
 
-          {/* ── SePay Native QR for Deposit ── */}
-          {depositQRSession ? (
-            <section className="rounded-[24px] border border-tertiary/20 bg-surface p-[clamp(20px,2.8vw,30px)] shadow-soft overflow-hidden relative mb-[var(--grid-gap)]">
-              <div className="pointer-events-none absolute inset-0 opacity-[0.05]" aria-hidden="true">
-                <div className="absolute -right-20 -top-20 h-[350px] w-[350px] rounded-full border border-tertiary bg-[radial-gradient(circle,rgba(100,210,255,0.25),transparent_70%)]" />
-                <div className="absolute -bottom-16 -left-16 h-[250px] w-[250px] rounded-full border border-tertiary/40 bg-[radial-gradient(circle,rgba(100,210,255,0.15),transparent_70%)]" />
+      {/* QR Deposit Section */}
+      <AnimatePresence>
+        {depositQRSession ? (
+          <motion.section
+            className="wqr-section"
+            variants={fadeUp}
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.97 }}
+            transition={{ duration: 0.45, ease: [0.19, 1, 0.22, 1] }}
+            style={{ marginBottom: "var(--grid-gap)" }}
+          >
+            {/* Header */}
+            <div className="wqr-header">
+              <div className="wqr-header__icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                  <rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                  <rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                  <rect x="5" y="5" width="4" height="4" fill="currentColor" rx="0.5" />
+                  <rect x="15" y="5" width="4" height="4" fill="currentColor" rx="0.5" />
+                  <rect x="5" y="15" width="4" height="4" fill="currentColor" rx="0.5" />
+                  <rect x="14" y="14" width="2" height="2" fill="currentColor" />
+                  <rect x="17" y="14" width="2" height="2" fill="currentColor" />
+                  <rect x="14" y="17" width="2" height="2" fill="currentColor" />
+                  <rect x="17" y="17" width="4" height="4" fill="currentColor" rx="0.5" />
+                </svg>
               </div>
+              <div>
+                <h2 className="wqr-header__title">Nạp tiền qua chuyển khoản</h2>
+                <p className="wqr-header__sub">Quét mã QR bằng ứng dụng ngân hàng của bạn</p>
+              </div>
+              {!depositQRPaid ? (
+                <button
+                  type="button"
+                  className="wqr-close"
+                  onClick={() => setDepositQRSession(null)}
+                  aria-label="Đóng"
+                >
+                  <X size={15} />
+                </button>
+              ) : null}
+            </div>
 
-              <div className="relative z-[1]">
-                <div className="flex items-center justify-between gap-3 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-[14px] border border-tertiary/25 bg-tertiary/10 shadow-[0_4px_12px_rgba(0,122,255,0.12)]">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-tertiary">
-                        <rect x="2" y="3" width="20" height="18" rx="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
-                        <line x1="2" y1="9" x2="22" y2="9" stroke="currentColor" strokeWidth="1.8" />
-                        <line x1="12" y1="9" x2="12" y2="21" stroke="currentColor" strokeWidth="1.8" />
-                        <circle cx="7" cy="13" r="1.2" fill="currentColor" />
-                        <circle cx="7" cy="17" r="1.2" fill="currentColor" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="m-0 text-[18px] font-black text-primary">Nạp tiền qua chuyển khoản</h2>
-                      <p className="m-0 text-[13px] font-semibold text-secondary">Quét mã QR bằng ứng dụng ngân hàng</p>
-                    </div>
-                  </div>
-                  {!depositQRPaid ? (
-                    <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-border bg-neutral text-primary hover:bg-border transition-colors shrink-0"
-                      onClick={() => { setDepositQRSession(null); }}>
-                      <X size={16} />
-                    </button>
-                  ) : null}
-                </div>
+            {/* Body */}
+            <div className="wqr-body">
+              {/* Left — QR Code */}
+              <div className="wqr-code-col">
+                <div className={`wqr-frame${depositQRPaid ? " is-paid" : ""}`}>
+                  {/* Corner Brackets */}
+                  <span className="wqr-corner wqr-corner--tl" aria-hidden="true" />
+                  <span className="wqr-corner wqr-corner--tr" aria-hidden="true" />
+                  <span className="wqr-corner wqr-corner--bl" aria-hidden="true" />
+                  <span className="wqr-corner wqr-corner--br" aria-hidden="true" />
 
-                <div className="grid gap-6 md:grid-cols-[280px_1fr] md:items-start">
-                  {/* QR Code */}
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="relative rounded-[20px] border-2 border-tertiary/20 bg-white p-4 shadow-[0_12px_36px_rgba(0,122,255,0.10)]">
-                      {!sepayQrFailed ? (
-                        <img
-                          src={depositQRSession.qrData.sepayQrUrl}
-                          alt="VietQR"
-                          width={280}
-                          height={280}
-                          className="block h-[280px] w-[280px]"
-                          crossOrigin="anonymous"
-                          onError={() => setSepayQrFailed(true)}
-                        />
-                      ) : (
-                        <canvas ref={fallbackCanvasRef} className="block h-[280px] w-[280px]" />
-                      )}
-                      <div className="absolute -top-[7px] left-1/2 -translate-x-1/2 h-[14px] w-[14px] rounded-full bg-tertiary shadow-[0_0_12px_rgba(0,122,255,0.5)]" />
-                      <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 h-[14px] w-[14px] rounded-full bg-tertiary shadow-[0_0_12px_rgba(0,122,255,0.5)]" />
-                      <div className="absolute top-1/2 -left-[7px] -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-tertiary shadow-[0_0_12px_rgba(0,122,255,0.5)]" />
-                      <div className="absolute top-1/2 -right-[7px] -translate-y-1/2 h-[14px] w-[14px] rounded-full bg-tertiary shadow-[0_0_12px_rgba(0,122,255,0.5)]" />
+                  {/* Scan Line */}
+                  {!depositQRPaid ? <span className="wqr-scan-line" aria-hidden="true" /> : null}
 
-                      {/* Logo overlay */}
-                      <div className="absolute inset-0 grid place-items-center pointer-events-none">
-                        <div className="h-10 w-10 rounded-full border-2 border-white bg-tertiary shadow-[0_4px_16px_rgba(0,122,255,0.35)] grid place-items-center">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-secondary">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="6" width="20" height="12" rx="2" />
-                        <circle cx="12" cy="12" r="2" />
-                        <path d="M6 12h.01M18 12h.01" />
-                      </svg>
-                      Mã QR động — chỉ dùng 1 lần
-                    </div>
+                  {/* Floating Particles */}
+                  <div className="wqr-particles" aria-hidden="true">
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
+                    <span className="wqr-particle" />
                   </div>
 
-                  {/* Bank Info + Status */}
-                  <div className="grid gap-4">
-                    {/* Bank Account Card */}
-                    <div className="rounded-[16px] border border-border bg-gradient-to-br from-neutral to-surface p-4">
-                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-secondary mb-3">Thông tin tài khoản thụ hưởng</p>
-
-                      <div className="grid gap-2.5">
-                        <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/60">
-                          <span className="text-[12px] font-semibold text-secondary">Ngân hàng</span>
-                          <span className="text-[13px] font-extrabold text-primary">{depositQRSession.qrData.bankName}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/60">
-                          <span className="text-[12px] font-semibold text-secondary">Số tài khoản</span>
-                          <span className="text-[14px] font-black tracking-wider text-primary font-mono">{depositQRSession.qrData.accountNumber}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/60">
-                          <span className="text-[12px] font-semibold text-secondary">Số tiền</span>
-                          <span className="text-[16px] font-black text-primary">{formatCurrency(depositQRSession.qrData.amount)}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 py-1.5">
-                          <span className="text-[12px] font-semibold text-secondary">Nội dung</span>
-                          <span className="text-[12px] font-extrabold text-primary font-mono max-w-[180px] truncate">{depositQRSession.qrData.reference}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Instructions + Status */}
-                    <div className="rounded-[16px] border border-border bg-neutral p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-wide ${
-                          depositQRPaid
-                            ? "border-success/30 bg-success/10 text-success"
-                            : "border-warning/30 bg-warning/10 text-warning"
-                        }`}>
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          {depositQRPaid ? "Đã nhận tiền" : "Chờ thanh toán"}
-                        </span>
-                      </div>
-
-                      <ol className="grid gap-2 text-[12px] font-semibold text-secondary list-decimal list-inside marker:text-tertiary marker:font-black">
-                        <li>Mở ứng dụng ngân hàng trên điện thoại</li>
-                        <li>Chọn tính năng quét mã QR</li>
-                        <li>Quét mã QR hoặc nhập thông tin thụ hưởng</li>
-                        <li>Kiểm tra số tiền và nội dung chuyển khoản</li>
-                        <li>Xác nhận chuyển — số dư tự động cập nhật</li>
-                      </ol>
-                    </div>
-
-                    {/* Status bar */}
-                    {!depositQRPaid ? (
-                      <div className="flex items-center gap-2 rounded-[12px] border border-tertiary/15 bg-tertiary/8 px-4 py-3 text-[13px] font-bold text-tertiary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-                          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                        </svg>
-                        Đang chờ thanh toán...
-                      </div>
+                  {/* QR Image */}
+                  <div className="wqr-img">
+                    {!sepayQrFailed ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={depositQRSession.qrData.sepayQrUrl}
+                        alt="VietQR"
+                        width={240}
+                        height={240}
+                        crossOrigin="anonymous"
+                        onError={() => setSepayQrFailed(true)}
+                      />
                     ) : (
-                      <div className="flex items-center gap-2 rounded-[12px] border border-success/20 bg-success/10 px-4 py-3 text-[13px] font-bold text-success">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                          <polyline points="22 4 12 14.01 9 11.01" />
-                        </svg>
-                        Nhận tiền thành công! Đang cập nhật số dư...
-                      </div>
+                      <canvas ref={fallbackCanvasRef} style={{ width: 240, height: 240, display: "block" }} />
                     )}
                   </div>
+
+                  {/* Success Overlay */}
+                  <AnimatePresence>
+                    {depositQRPaid ? (
+                      <motion.div
+                        className="wqr-success"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+                        aria-live="polite"
+                      >
+                        <div className="wqr-success__ring">
+                          <svg className="wqr-success__check" width="36" height="36" viewBox="0 0 24 24" fill="none">
+                            <path d="M7 12.5l3.5 3.5 6.5-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                        <span>Nhận tiền thành công!</span>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+                <p className="wqr-badge">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
+                  Mã QR động · chỉ dùng 1 lần
+                </p>
+              </div>
+
+              {/* Right — Bank Info + Steps + Status */}
+              <div className="wqr-info-col">
+                <div className="wqr-bank">
+                  <p className="wqr-bank__heading">Thông tin thụ hưởng</p>
+                  <div className="wqr-bank__rows">
+                    {[
+                      { label: "Ngân hàng", value: depositQRSession.qrData.bankName, mono: false },
+                      { label: "Số tài khoản", value: depositQRSession.qrData.accountNumber, mono: true },
+                      { label: "Số tiền", value: formatCurrency(depositQRSession.qrData.amount), mono: false, accent: true },
+                      { label: "Nội dung CK", value: depositQRSession.qrData.reference, mono: true, truncate: true },
+                    ].map(({ label, value, mono, accent, truncate }) => (
+                      <div key={label} className="wqr-bank__row">
+                        <span>{label}</span>
+                        <strong className={`${mono ? "font-mono" : ""} ${accent ? "wqr-bank__amount" : ""} ${truncate ? "truncate max-w-[160px]" : ""}`}>
+                          {value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <ol className="wqr-steps">
+                  {[
+                    "Mở ứng dụng ngân hàng",
+                    "Chọn tính năng Quét mã QR",
+                    "Quét mã hoặc nhập thủ công",
+                    "Kiểm tra số tiền & nội dung",
+                    "Xác nhận — số dư tự cập nhật",
+                  ].map((s, i) => (
+                    <li key={i} className="wqr-step">
+                      <span className="wqr-step__num">{i + 1}</span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className={`wqr-status${depositQRPaid ? " is-paid" : " is-waiting"}`}>
+                  {!depositQRPaid ? (
+                    <>
+                      <span className="wqr-status__spinner" aria-hidden="true" />
+                      Đang chờ thanh toán...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      Nhận tiền thành công! Đang cập nhật số dư...
+                    </>
+                  )}
                 </div>
               </div>
-            </section>
-          ) : null}
-
-          <section className="rounded-[24px] border border-card-border bg-surface p-[clamp(18px,2.2vw,24px)] shadow-soft">
-            <div className="flex items-center justify-between gap-3 mb-5">
-              <h2 className="m-0 text-[18px] font-black text-primary inline-flex items-center gap-2">
-                <History size={18} />
-                Lịch sử giao dịch
-              </h2>
             </div>
+          </motion.section>
+        ) : null}
+      </AnimatePresence>
 
-            {transactions.length === 0 ? (
-              <div className="grid place-items-center py-12 text-center">
-                <Banknote size={32} />
-                <p className="mt-3 text-[15px] font-bold text-secondary">Chưa có giao dịch nào.</p>
-                <p className="text-[13px] font-semibold text-secondary">Nạp tiền vào ví để bắt đầu.</p>
-              </div>
-            ) : (
-              <div className="grid gap-2.5">
-                {transactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between gap-3 rounded-[14px] border border-border/80 bg-neutral p-3.5 transition-all hover:border-border">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {transactionIcon(tx.type)}
-                      <div className="min-w-0">
-                        <p className="text-[14px] font-extrabold text-primary truncate">{transactionLabel(tx.type)}</p>
-                        <p className="text-[12px] font-semibold text-secondary truncate">
-                          {tx.description ?? ""}
-                        </p>
-                        <p className="text-[11px] font-bold text-secondary">
+      {/* Transaction History */}
+      <motion.section className="tx-section" variants={fadeUp}>
+        <div className="tx-section__header">
+          <h2 className="tx-section__title">
+            <History size={18} />
+            Lịch sử giao dịch
+          </h2>
+        </div>
+
+        {transactions.length === 0 ? (
+          <div className="tx-empty">
+            <Banknote size={32} />
+            <p>Chưa có giao dịch nào.</p>
+            <span>Nạp tiền vào ví để bắt đầu.</span>
+          </div>
+        ) : (
+          <>
+            <div className="tx-list">
+              {transactions.map((tx) => {
+                const isInflow = tx.type === "DEPOSIT" || tx.type === "SELLER_REVENUE";
+                return (
+                  <motion.div
+                    key={tx.id}
+                    className="tx-row"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
+                  >
+                    <div className="tx-row__left">
+                      <div className={`tx-row__icon ${isInflow ? "tx-row__icon--inflow" : "tx-row__icon--outflow"}`}>
+                        {transactionIcon(tx.type)}
+                      </div>
+                      <div className="tx-row__info">
+                        <p className="tx-row__label">{transactionLabel(tx.type)}</p>
+                        <p className="tx-row__desc">{tx.description ?? ""}</p>
+                        <span className="tx-row__meta">
                           {new Date(tx.createdAt).toLocaleDateString("vi-VN", {
                             year: "numeric",
                             month: "2-digit",
@@ -454,134 +550,149 @@ export default function WalletPage() {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
-                        </p>
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className={`text-[15px] font-black ${tx.type === "DEPOSIT" || tx.type === "SELLER_REVENUE" ? "text-success" : "text-danger"}`}>
-                        {tx.type === "DEPOSIT" || tx.type === "SELLER_REVENUE" ? "+" : "-"}{formatCurrency(Number(tx.amount))}
-                      </p>
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                        tx.status === "COMPLETED" ? "border-success/30 bg-success/10 text-success" :
-                        tx.status === "FAILED" ? "border-danger/30 bg-danger/10 text-danger" :
-                        "border-warning/30 bg-warning/10 text-warning"
+                    <div className="tx-row__right">
+                      <span className={`tx-row__amount ${isInflow ? "tx-row__amount--inflow" : "tx-row__amount--outflow"}`}>
+                        {isInflow ? "+" : "-"}{formatCurrency(Number(tx.amount))}
+                      </span>
+                      <span className={`tx-row__badge ${
+                        tx.status === "COMPLETED"
+                          ? "tx-row__badge--completed"
+                          : tx.status === "FAILED"
+                            ? "tx-row__badge--failed"
+                            : "tx-row__badge--pending"
                       }`}>
                         {statusLabel(tx.status)}
                       </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  </motion.div>
+                );
+              })}
+            </div>
 
             {pagination.page * pagination.limit < pagination.total && (
-              <button
-                type="button"
-                className="mt-4 w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[13px] border border-border bg-surface px-5 text-[14px] font-extrabold text-primary transition-all hover:-translate-y-[1px]"
-                onClick={() => {
-                  const nextPage = pagination.page + 1;
-                  apiFetch<ApiList<WalletTransaction>>(`/wallet/transactions?page=${nextPage}&limit=10`, { notifySuccess: false })
-                    .then((res) => {
-                      setTransactions((prev) => [...prev, ...res.data]);
-                      setPagination(res.pagination ?? { page: nextPage, limit: 10, total: pagination.total });
-                    })
-                    .catch(() => showToast("Không thể tải thêm giao dịch.", "error"));
-                }}
-              >
-                Xem thêm
-              </button>
-            )}
-          </section>
-
-          {showDeposit && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => !isDepositing && setShowDeposit(false)}>
-              <div className="w-full max-w-[460px] rounded-[24px] border border-card-border bg-surface p-[clamp(20px,2.6vw,30px)] shadow-soft max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <h2 className="m-0 text-[20px] font-black text-primary">Nạp tiền vào ví</h2>
-                  <button type="button" className="grid h-8 w-8 place-items-center rounded-full border border-border bg-neutral text-primary hover:bg-border transition-colors" onClick={() => { if (!isDepositing) { setShowDeposit(false); setDepositAmount(0); }}}>
-                    ✕
-                  </button>
-                </div>
-
-                <div className="mb-4">
-                  <p className="text-[13px] font-extrabold text-primary mb-2.5">Số tiền nạp</p>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] font-black text-secondary">₫</span>
-                    <input
-                      type="number"
-                      min={10000}
-                      max={100000000}
-                      step={10000}
-                      value={depositAmount || ""}
-                      onChange={(e) => setDepositAmount(Number(e.target.value) || 0)}
-                      placeholder="Nhập số tiền"
-                      className="w-full rounded-[14px] border border-border bg-neutral px-10 py-3.5 text-[18px] font-black text-primary text-right outline-none transition-all focus:border-tertiary focus:ring-2 focus:ring-tertiary/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {DEPOSIT_PRESETS.map((amount) => (
-                    <button
-                      key={amount}
-                      type="button"
-                      className={`px-3 py-2 rounded-[10px] text-[13px] font-extrabold border transition-all ${
-                        depositAmount === amount
-                          ? "border-tertiary bg-tertiary/10 text-tertiary"
-                          : "border-border bg-neutral text-secondary hover:border-tertiary/30"
-                      }`}
-                      onClick={() => setDepositAmount(amount)}
-                    >
-                      {formatCurrency(amount)}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mb-5">
-                  <p className="text-[13px] font-extrabold text-primary mb-2.5">Phương thức nạp</p>
-                  <div className="grid gap-2">
-                    {paymentMethods.map((method) => (
-                      <button
-                        key={method.id}
-                        type="button"
-                        className={`flex items-center gap-3 rounded-[14px] border p-3 text-left transition-all ${
-                          depositMethod === method.id
-                            ? "border-tertiary bg-tertiary/8 text-primary"
-                            : "border-border bg-neutral text-secondary hover:border-tertiary/30"
-                        }`}
-                        onClick={() => setDepositMethod(method.id)}
-                      >
-                        <CreditCard size={16} />
-                        <span className="text-[14px] font-extrabold">{method.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="flex-1 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[14px] border border-border bg-surface px-5 text-[14px] font-extrabold text-primary transition-all hover:-translate-y-[1px]"
-                    onClick={() => { setShowDeposit(false); setDepositAmount(0); }}
-                    disabled={isDepositing}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[14px] border border-tertiary bg-tertiary px-5 text-[14px] font-extrabold text-on-accent shadow-soft transition-all hover:-translate-y-[1px] hover:shadow-hover disabled:opacity-55 disabled:pointer-events-none"
-                    onClick={handleDeposit}
-                    disabled={isDepositing || depositAmount <= 0}
-                  >
-                    {isDepositing ? <Loader2 size={16} className="spin-icon" /> : <CircleDollarSign size={16} />}
-                    {isDepositing ? "Đang xử lý..." : `Nạp ${formatCurrency(depositAmount || 0)}`}
-                  </button>
-                </div>
+              <div className="tx-load-more">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextPage = pagination.page + 1;
+                    apiFetch<ApiList<WalletTransaction>>(`/wallet/transactions?page=${nextPage}&limit=10`, { notifySuccess: false })
+                      .then((res) => {
+                        setTransactions((prev) => [...prev, ...res.data]);
+                        setPagination(res.pagination ?? { page: nextPage, limit: 10, total: pagination.total });
+                      })
+                      .catch(() => showToast("Không thể tải thêm giao dịch.", "error"));
+                  }}
+                >
+                  Xem thêm
+                </button>
               </div>
-            </div>
-          )}
-        </>
-      )}
-    </main>
+            )}
+          </>
+        )}
+      </motion.section>
+
+      {/* Deposit Modal */}
+      <AnimatePresence>
+        {showDeposit ? (
+          <motion.div
+            className="deposit-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => !isDepositing && setShowDeposit(false)}
+          >
+            <motion.div
+              className="deposit-card"
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="deposit-card__header">
+                <h2 className="deposit-card__title">Nạp tiền vào ví</h2>
+                <button
+                  type="button"
+                  className="deposit-card__close"
+                  onClick={() => { if (!isDepositing) { setShowDeposit(false); setDepositAmount(0); } }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <span className="deposit-card__label">Số tiền nạp</span>
+              <div className="deposit-card__amount-input">
+                <span>₫</span>
+                <input
+                  type="number"
+                  min={10000}
+                  max={100000000}
+                  step={10000}
+                  value={depositAmount || ""}
+                  onChange={(e) => setDepositAmount(Number(e.target.value) || 0)}
+                  placeholder="Nhập số tiền"
+                />
+              </div>
+
+              <div className="deposit-card__presets">
+                {DEPOSIT_PRESETS.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    className={`deposit-card__preset${depositAmount === amount ? " deposit-card__preset--active" : ""}`}
+                    onClick={() => setDepositAmount(amount)}
+                  >
+                    {formatCurrency(amount)}
+                  </button>
+                ))}
+              </div>
+
+              <span className="deposit-card__label">Phương thức nạp</span>
+              <div className="deposit-card__methods">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    className={`deposit-card__method${depositMethod === method.id ? " deposit-card__method--active" : ""}`}
+                    onClick={() => setDepositMethod(method.id)}
+                  >
+                    <CreditCard size={16} />
+                    <span>{method.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="deposit-card__actions">
+                <button
+                  type="button"
+                  className="deposit-card__cancel"
+                  onClick={() => { setShowDeposit(false); setDepositAmount(0); }}
+                  disabled={isDepositing}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className="deposit-card__submit"
+                  onClick={handleDeposit}
+                  disabled={isDepositing || depositAmount <= 0}
+                >
+                  {isDepositing ? (
+                    <Loader2 size={16} className="spin-icon" />
+                  ) : (
+                    <CircleDollarSign size={16} />
+                  )}
+                  {isDepositing ? "Đang xử lý..." : `Nạp ${formatCurrency(depositAmount || 0)}`}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.main>
   );
 }

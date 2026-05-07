@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatCurrency, isNumericId, requestJson, type ApiEnvelope } from "@/lib/api";
+import { formatCurrency, isNumericId, requestJson, safeImageUrls, type ApiEnvelope } from "@/lib/api";
 
 type Suggestion = {
   id: number;
@@ -42,7 +42,7 @@ export function SearchInput({
     }
     try {
       const res = await requestJson<ApiEnvelope<Suggestion[]>>(`/products/suggestions?q=${encodeURIComponent(q)}&limit=8`);
-      setSuggestions(res.data ?? []);
+      setSuggestions((res.data ?? []).map((s) => ({ ...s, images: safeImageUrls(s.images) })));
       setIsOpen((res.data ?? []).length > 0);
       setActiveIndex(-1);
     } catch {
@@ -117,7 +117,7 @@ export function SearchInput({
 
   return (
     <div ref={containerRef} className="search-autocomplete">
-      <form ref={searchFormRef} action="/catalog" className="flex w-full max-w-[720px] min-h-[58px] items-center gap-3 mt-[30px] p-2 pl-4 bg-surface border border-card-border rounded-[var(--radius-lg)] shadow-soft transition-all focus-within:border-tertiary/45 focus-within:shadow-hover focus-within:-translate-y-[1px]">
+      <form ref={searchFormRef} action="/catalog" className="flex w-full items-center">
         <Search size={18} />
         <input
           ref={inputRef}
@@ -144,10 +144,25 @@ export function SearchInput({
                 onMouseEnter={() => setActiveIndex(i)}
               >
                 {s.images[0] ? (
-                  <img src={s.images[0]} alt="" width={36} height={36} loading="lazy" />
-                ) : (
-                  <span className="suggestion-type-badge">{typeLabel(s.type)}</span>
-                )}
+                  <img
+                    src={s.images[0]}
+                    alt=""
+                    width={36}
+                    height={36}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const badge = e.currentTarget.nextElementSibling as HTMLElement | null;
+                      if (badge) badge.style.display = "";
+                    }}
+                  />
+                ) : null}
+                <span
+                  className="suggestion-type-badge"
+                  style={s.images[0] ? { display: "none" } : undefined}
+                >
+                  {typeLabel(s.type)}
+                </span>
                 <div className="suggestion-body">
                   <strong>{s.name}</strong>
                   <small>{formatCurrency(s.price)}</small>
@@ -156,8 +171,13 @@ export function SearchInput({
             </li>
           ))}
           <li className="search-suggestions__all">
-            <Link href={`/catalog?search=${encodeURIComponent(query)}${categoryIdFilter ? `&categoryId=${encodeURIComponent(categoryIdFilter)}` : ""}`} onClick={() => setIsOpen(false)}>
-              Xem tất cả kết quả cho &quot;{query}&quot;
+            <Link
+              href={`/catalog?search=${encodeURIComponent(query)}${categoryIdFilter ? `&categoryId=${encodeURIComponent(categoryIdFilter)}` : ""}`}
+              onClick={() => setIsOpen(false)}
+              className="search-all-link"
+            >
+              <span>Xem tất cả kết quả cho <strong>&quot;{query}&quot;</strong></span>
+              <ArrowRight size={13} aria-hidden="true" />
             </Link>
           </li>
         </ul>

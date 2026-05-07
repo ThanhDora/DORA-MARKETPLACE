@@ -60,55 +60,61 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
   const peakSold = Math.max(...topSellingProducts.map((product) => product.soldCount), 1);
 
   return (
-    <div className="inventory-panel inventory-panel--leaderboard" aria-label="Bảng xếp hạng sản phẩm bán chạy nhất">
-      <div className="inventory-panel__header">
-        <video
-          className="inventory-panel__header-media"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-        >
-          <source src="/rankup.mp4" type="video/mp4" />
-        </video>
+    <div className="ldb-panel" aria-label="Bảng xếp hạng sản phẩm bán chạy nhất">
+
+      {/* Editorial header */}
+      <div className="ldb-header">
+        <div className="ldb-header__top">
+          <span className="ldb-live-badge">
+            <span className="ldb-live-dot" aria-hidden="true" />
+            Realtime
+          </span>
+          <TrendingUp size={15} className="ldb-header__icon" aria-hidden="true" />
+        </div>
+        <h2 className="ldb-header__title">Bảng<br/>xếp hạng</h2>
+        <p className="ldb-header__sub">Top sản phẩm bán chạy</p>
+        <div className="ldb-header__nums" aria-hidden="true">
+          <span>01</span><span>02</span><span>03</span>
+        </div>
       </div>
 
-      <div className="leaderboard-stats">
-        <span>
-          <Activity size={16} />
-          {totalSold || 120} lượt mua
-        </span>
-        <span>
-          <TrendingUp size={16} />
-          Cao nhất {peakSold} lượt
-        </span>
+      {/* Stats */}
+      <div className="ldb-stats">
+        <div className="ldb-stat">
+          <Activity size={13} aria-hidden="true" />
+          <div>
+            <b>{totalSold || 120}</b>
+            <small>lượt mua</small>
+          </div>
+        </div>
+        <div className="ldb-stat">
+          <TrendingUp size={13} aria-hidden="true" />
+          <div>
+            <b>{peakSold}</b>
+            <small>cao nhất</small>
+          </div>
+        </div>
       </div>
 
-      <div className="inventory-panel__list">
+      {/* Leaderboard rows */}
+      <div className="ldb-list">
         {topSellingProducts.map((product, index) => {
-          const soldLevel = Math.min(100, Math.max(10, Math.round((product.soldCount / peakSold) * 100)));
+          const soldLevel = Math.min(100, Math.max(8, Math.round((product.soldCount / peakSold) * 100)));
+          const rankMedal = ["🥇", "🥈", "🥉"][index] ?? null;
           return (
             <Link
               key={product.id}
               href={getProductHref(product)}
-              className="inventory-row"
+              className={`ldb-row ldb-row--${index + 1}`}
               style={{
-                "--stock-level": `${soldLevel}%`,
-                "--row-delay": `${index * 80}ms`,
+                "--sold-pct": `${soldLevel}%`,
+                "--row-i": index,
               } as CSSProperties}
             >
-              <span
-                className={
-                  index === 0
-                    ? "inventory-row__rank inventory-row__rank--champion"
-                    : "inventory-row__rank inventory-row__rank--plain"
-                }
-              >
-                {index === 0 ? "1" : `${index + 1}`}
+              <span className="ldb-row__rank" aria-label={`Hạng ${index + 1}`}>
+                {rankMedal ?? <span>{index + 1}</span>}
               </span>
-              <span className="inventory-row__visual" aria-hidden="true">
+              <span className="ldb-row__visual" aria-hidden="true">
                 {product.images[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -116,20 +122,19 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
                     alt=""
                     loading={index < 2 ? "eager" : "lazy"}
                     decoding="async"
+                    onError={(e) => { e.currentTarget.src = ""; e.currentTarget.style.display = "none"; }}
                   />
                 ) : (
-                  <span>{product.type}</span>
+                  <span className="ldb-row__type-badge">{product.type.slice(0, 3)}</span>
                 )}
               </span>
-              <span className="inventory-row__body">
+              <span className="ldb-row__body">
                 <strong>{product.name}</strong>
-                <small>{product.type} · {product.sellerName ?? "Dora MARKETPLACE"}</small>
-                <span className="inventory-row__bar" aria-hidden="true">
-                  <span />
-                </span>
+                <small>{product.type} · {product.sellerName ?? "Dora"}</small>
+                <span className="ldb-row__bar" aria-hidden="true"><span /></span>
               </span>
-              <span className="inventory-row__score">
-                <strong>{product.soldCount}</strong>
+              <span className="ldb-row__score">
+                <b>{product.soldCount}</b>
                 <small>lượt mua</small>
               </span>
             </Link>
@@ -137,15 +142,10 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
         })}
       </div>
 
-      <div className="inventory-panel__footer">
-        <span>
-          <ShieldCheck size={16} />
-          Duyệt seller
-        </span>
-        <span>
-          <CreditCard size={16} />
-          Nhiều cách thanh toán
-        </span>
+      {/* Footer */}
+      <div className="ldb-footer">
+        <span><ShieldCheck size={14} aria-hidden="true" />Seller đã duyệt</span>
+        <span><CreditCard size={14} aria-hidden="true" />Thanh toán bảo mật</span>
       </div>
     </div>
   );

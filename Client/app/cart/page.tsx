@@ -13,7 +13,7 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatCurrency,
   normalizeProduct,
@@ -58,6 +58,7 @@ export default function CartPage() {
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
+  const hasLoadedOnce = useRef(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -82,7 +83,9 @@ export default function CartPage() {
       return;
     }
 
-    setIsLoading(true);
+    const silent = hasLoadedOnce.current;
+    if (!silent) setIsLoading(true);
+
     try {
       const response = await apiFetch<ApiEnvelope<CartResponse>>("/cart");
       const nextItems = (response.data.items ?? []).map(toCartLine);
@@ -93,12 +96,15 @@ export default function CartPage() {
         const valid = current.filter((id) => nextItems.some((item) => item.id === id));
         return valid.length > 0 ? valid : nextItems.map((item) => item.id);
       });
+      hasLoadedOnce.current = true;
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Không thể tải giỏ hàng.");
-      setItems([]);
-      setSelectedItemIds([]);
+      if (!silent) {
+        setItems([]);
+        setSelectedItemIds([]);
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [apiFetch, isAuthenticated, showToast]);
 
@@ -136,7 +142,6 @@ export default function CartPage() {
       setItems((current) =>
         current.map((line) => (line.id === item.id ? { ...line, quantity: nextQuantity } : line)),
       );
-      notifyCartChanged();
       showToast("Đã cập nhật số lượng.", "success");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Không thể cập nhật giỏ hàng.");
@@ -288,11 +293,11 @@ export default function CartPage() {
                 style={{ width: `calc(66.6666% * ${cartStepProgress / 100})` }}
               />
               <div
-                className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 rounded-full border border-white/65 bg-surface p-1 shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
-                style={{ left: `calc(16.6667% + 66.6666% * ${cartStepProgress / 100})` }}
+                style={{ left: `calc(16.6667% + 66.6666% * ${cartStepProgress / 100})`, borderRadius: "9999px", overflow: "hidden" }}
+                className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 border border-white/65 bg-surface p-1 shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
                 aria-hidden="true"
               >
-                <img src="/logo.jpg" alt="" className="h-full w-full rounded-full object-cover" />
+                <img src="/logo.jpg" alt="" style={{ borderRadius: "9999px" }} className="h-full w-full object-cover" />
               </div>
             </div>
           </div>
@@ -309,7 +314,7 @@ export default function CartPage() {
           </Link>
         </section>
       ) : (
-        <section className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-grid-gap items-start">
+        <section className="cart-layout grid lg:grid-cols-[minmax(0,1fr)_380px] gap-grid-gap items-start">
           <div className="grid gap-grid-gap" aria-label="Sản phẩm trong giỏ">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -354,7 +359,7 @@ export default function CartPage() {
                   <Link href={`/products/${product.id}`} className="cart-line__visual product-visual grid place-items-center text-primary bg-neutral border border-border transition-all hover:border-tertiary/35">
                     {product.images[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.images[0]} alt={product.name} />
+                      <img src={product.images[0]} alt={product.name} onError={(e) => { e.currentTarget.src = "/marketplace-console.svg"; }} />
                     ) : (
                       <span>{product.type}</span>
                     )}
@@ -390,7 +395,7 @@ export default function CartPage() {
             })}
           </div>
 
-          <aside className="cart-summary">
+          <aside className="cart-summary sticky top-[calc(var(--header-height)+24px)] self-start">
             <p className="m-0 mb-[14px] text-secondary text-[13px] font-extrabold tracking-normal uppercase">Tóm tắt</p>
             <h2>Thanh toán ví web</h2>
             <div className="flex items-center justify-between py-2 border-b border-border last:border-0">
@@ -430,6 +435,23 @@ export default function CartPage() {
             </Link>
           </aside>
         </section>
+      )}
+
+      {false && items.length > 0 && (
+        <div className="cart-mobile-bar lg:hidden">
+          <div className="cart-mobile-bar__summary">
+            <small>{selectedItems.length}/{items.length} sản phẩm</small>
+            <strong>{formatCurrency(subtotal)}</strong>
+          </div>
+          <button
+            type="button"
+            className="cart-mobile-bar__btn"
+            onClick={proceedCheckout}
+            disabled={selectedItems.length === 0 || isCheckingOut}
+          >
+            Thanh toán
+          </button>
+        </div>
       )}
     </main>
   );

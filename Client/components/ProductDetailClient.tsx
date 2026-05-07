@@ -75,6 +75,7 @@ function ProductGallery({ product }: { product: StoreProduct }) {
             loading="eager"
             decoding="async"
             fetchPriority="high"
+            onError={(e) => { e.currentTarget.src = "/marketplace-console.svg"; }}
             className="block h-full w-full object-contain"
           />
         ) : (

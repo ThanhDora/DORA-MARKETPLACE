@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { AppProviders } from "@/components/AppProviders";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SWRegister } from "@/components/SWRegister";
 import "./globals.css";
@@ -15,8 +16,8 @@ export const metadata: Metadata = {
   description:
     "DORA MARKETPLACE là chợ sản phẩm số cho tài khoản, API key, license và file số với thanh toán bảo mật, tồn kho rõ ràng và bảng điều khiển realtime.",
   icons: {
-    icon: "/logo-small.png",
-    apple: "/logo-small.png",
+    icon: "/logo.jpg",
+    apple: "/apple-icon.png",
   },
   openGraph: {
     title: "DORA MARKETPLACE",
@@ -68,6 +69,7 @@ export default function RootLayout({
         <AppProviders>
           <SiteHeader />
           {children}
+          <SiteFooter />
           <MobileBottomNav />
           <SWRegister />
         </AppProviders>

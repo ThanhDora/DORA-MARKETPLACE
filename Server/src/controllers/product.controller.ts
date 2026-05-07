@@ -358,7 +358,23 @@ export const suggestProducts = async (req: Request, res: Response) => {
     orderBy: { soldCount: 'desc' },
   });
 
-  sendSuccess(res, products);
+  const normalized = products.map((p) => ({
+    ...p,
+    images: parseJsonArray(p.images),
+  }));
+
+  sendSuccess(res, normalized);
 };
+
+function parseJsonArray(value: unknown): string[] {
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+    } catch {}
+  }
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  return [];
+}
 
 export { prisma };

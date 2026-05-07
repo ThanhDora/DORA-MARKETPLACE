@@ -287,11 +287,11 @@ export function CheckoutClient({ items }: CheckoutClientProps) {
                       style={{ width: `calc(66.6666% * ${stepProgress / 100})` }}
                     />
                     <div
-                      className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 rounded-full border border-white/65 bg-surface p-1 shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
-                      style={{ left: `calc(16.6667% + 66.6666% * ${stepProgress / 100})` }}
+                      style={{ left: `calc(16.6667% + 66.6666% * ${stepProgress / 100})`, borderRadius: "9999px", overflow: "hidden" }}
+                      className="absolute top-[2px] z-[3] h-10 w-10 -translate-x-1/2 border border-white/65 bg-surface p-1 shadow-[0_12px_26px_rgba(0,122,255,0.22)] transition-all duration-medium"
                       aria-hidden="true"
                     >
-                      <img src="/logo.jpg" alt="" className="h-full w-full rounded-full object-cover" />
+                      <img src="/logo.jpg" alt="" style={{ borderRadius: "9999px" }} className="h-full w-full object-cover" />
                     </div>
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export function CheckoutClient({ items }: CheckoutClientProps) {
                   <div className="checkout-line__visual grid h-[78px] w-[78px] place-items-center overflow-hidden rounded-[14px] border border-border bg-neutral">
                     {item.product.images[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.product.images[0]} alt={item.product.name} />
+                      <img src={item.product.images[0]} alt={item.product.name} onError={(e) => { e.currentTarget.src = "/marketplace-console.svg"; }} />
                     ) : (
                       <span>{item.product.type}</span>
                     )}

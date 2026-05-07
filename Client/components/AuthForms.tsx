@@ -263,7 +263,7 @@ export function LoginForm({ initialGif = null }: { initialGif?: AuthGifPayload |
           Email
           <span className="flex items-center gap-2 mt-1 relative">
             <Mail size={16} />
-            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0" />
           </span>
           <small className="block text-xs text-secondary mt-1">Dùng email đã đăng ký và xác minh.</small>
         </label>
@@ -277,6 +277,7 @@ export function LoginForm({ initialGif = null }: { initialGif?: AuthGifPayload |
               autoComplete="current-password"
               placeholder="Nhập mật khẩu"
               required
+              className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0"
             />
             <PasswordToggle isVisible={isPasswordVisible} onToggle={() => setIsPasswordVisible((value) => !value)} />
           </span>
@@ -348,7 +349,7 @@ export function RegisterForm({ initialGif = null }: { initialGif?: AuthGifPayloa
           Tên hiển thị
           <span className="flex items-center gap-2 mt-1 relative">
             <UserRound size={16} />
-            <input name="name" autoComplete="name" placeholder="Nguyen Van A" required />
+            <input name="name" autoComplete="name" placeholder="Nguyen Van A" required className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0" />
           </span>
           <small className="block text-xs text-secondary mt-1">Tên sẽ hiển thị trong hồ sơ và đơn hàng.</small>
         </label>
@@ -356,7 +357,7 @@ export function RegisterForm({ initialGif = null }: { initialGif?: AuthGifPayloa
           Email
           <span className="flex items-center gap-2 mt-1 relative">
             <Mail size={16} />
-            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0" />
           </span>
         </label>
         <label className="block mb-4">
@@ -369,6 +370,7 @@ export function RegisterForm({ initialGif = null }: { initialGif?: AuthGifPayloa
               autoComplete="new-password"
               placeholder="Tối thiểu 8 ký tự"
               required
+              className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0"
             />
             <PasswordToggle isVisible={isPasswordVisible} onToggle={() => setIsPasswordVisible((value) => !value)} />
           </span>
@@ -416,7 +418,7 @@ export function ForgotPasswordForm() {
           Email
           <span className="flex items-center gap-2 mt-1 relative">
             <Mail size={16} />
-            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
+            <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0" />
           </span>
           <small className="block text-xs text-secondary mt-1">Hệ thống sẽ gửi link đặt lại nếu email tồn tại.</small>
         </label>
@@ -467,6 +469,7 @@ export function ResetPasswordForm() {
               autoComplete="new-password"
               placeholder="Tối thiểu 8 ký tự"
               required
+              className="flex-1 min-h-0 border-0 border-none bg-transparent p-0 shadow-none outline-none appearance-none focus:border-0 focus:shadow-none focus:outline-none focus:ring-0"
             />
             <PasswordToggle isVisible={isPasswordVisible} onToggle={() => setIsPasswordVisible((value) => !value)} />
           </span>

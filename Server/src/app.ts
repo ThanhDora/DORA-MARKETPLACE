@@ -111,6 +111,12 @@ app.get('/api/uploads/images/:filename', (req, res) => {
   ];
   const imageFile = candidates.find((candidate) => fs.existsSync(candidate));
   if (!imageFile) {
+    const placeholder = path.resolve(process.cwd(), 'public', 'placeholder.svg');
+    if (fs.existsSync(placeholder)) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.sendFile(placeholder);
+    }
     return res.status(404).json({ success: false, message: 'Image not found' });
   }
 
