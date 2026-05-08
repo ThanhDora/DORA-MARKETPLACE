@@ -4257,6 +4257,11 @@ textarea:not(.auth-form *):focus {
 }
 
 /* Kicker — small uppercase label with ornament */
+@keyframes kicker-float {
+  0%, 100% { transform: translateY(0);   opacity: 1;   }
+  50%       { transform: translateY(-3px); opacity: 0.85; }
+}
+
 .hero__kicker {
   display: inline-flex;
   align-items: center;
@@ -4268,7 +4273,9 @@ textarea:not(.auth-form *):focus {
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  animation: hero-fade-up 600ms cubic-bezier(0.16,1,0.3,1) both;
+  animation:
+    hero-fade-up 600ms cubic-bezier(0.16,1,0.3,1) both,
+    kicker-float 5s ease-in-out 1.2s infinite;
 }
 
 .hero__kicker-ornament {
@@ -4311,7 +4318,22 @@ textarea:not(.auth-form *):focus {
   animation: hero-fade-up 650ms cubic-bezier(0.16,1,0.3,1) 60ms both;
 }
 
-/* "Marketplace" — shimmer sweep on load */
+/* "Marketplace" — shimmer sweep on load then loops */
+@keyframes hero-title-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes title-shimmer-in {
+  from { background-position: 120% 0; }
+  to   { background-position: -20% 0; }
+}
+
+@keyframes title-shimmer-loop {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -20% 0; }
+}
+
 .hero__title-em {
   display: block;
   font-family: "Playfair Display", "Cormorant Garamond", Georgia, "Times New Roman", serif;
@@ -4324,35 +4346,38 @@ textarea:not(.auth-form *):focus {
   background: linear-gradient(
     105deg,
     #1c1814 0%,
-    #1c1814 38%,
-    #9e7f5e 48%,
-    #d4a870 54%,
-    #9e7f5e 60%,
-    #1c1814 68%,
+    #1c1814 30%,
+    #7a6145 42%,
+    #c49a55 50%,
+    #e8c880 54%,
+    #c49a55 58%,
+    #7a6145 66%,
+    #1c1814 78%,
     #1c1814 100%
   );
-  background-size: 250% 100%;
-  background-position: 100% 0;
+  background-size: 280% 100%;
+  background-position: 120% 0;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation:
     hero-title-rise 750ms cubic-bezier(0.16,1,0.3,1) 40ms both,
-    title-shimmer 1400ms ease-out 500ms forwards;
+    title-shimmer-in 1200ms ease-out 500ms forwards,
+    title-shimmer-loop 5s ease-in-out 2.2s infinite;
   will-change: transform, opacity, background-position;
 }
 
-@keyframes hero-title-rise {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Subtitle — slide from left then gradient drift */
+@keyframes hero-slide-left {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes title-shimmer {
-  from { background-position: 100% 0; }
-  to   { background-position: -20% 0; }
+@keyframes subtitle-shimmer {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -20% 0; }
 }
 
-/* Subtitle — slide from left */
 .hero__title-sub {
   display: block;
   font-family: "Playfair Display", "Cormorant Garamond", Georgia, "Times New Roman", serif;
@@ -4361,16 +4386,27 @@ textarea:not(.auth-form *):focus {
   font-style: italic;
   line-height: 1.14;
   letter-spacing: -0.009em;
-  color: #7d6d5a;
   margin-top: 4px;
   text-wrap: balance;
-  animation: hero-slide-left 650ms cubic-bezier(0.16,1,0.3,1) 180ms both;
+  background: linear-gradient(
+    100deg,
+    #7d6d5a 0%,
+    #7d6d5a 30%,
+    #b8966a 45%,
+    #d4a870 52%,
+    #b8966a 59%,
+    #7d6d5a 72%,
+    #7d6d5a 100%
+  );
+  background-size: 260% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    hero-slide-left 650ms cubic-bezier(0.16,1,0.3,1) 180ms both,
+    subtitle-shimmer 6s ease-in-out 3.5s infinite;
   will-change: transform, opacity;
-}
-
-@keyframes hero-slide-left {
-  from { opacity: 0; transform: translateX(-18px); }
-  to   { opacity: 1; transform: translateX(0); }
 }
 
 /* Decorative rule — lines draw outward, dot pops */
@@ -4382,27 +4418,35 @@ textarea:not(.auth-form *):focus {
   margin: 24px 0;
 }
 
-.hero__rule-line {
-  flex: 1;
-  height: 1px;
-  background: #d4c4b0;
-  transform-origin: center;
-  animation: rule-draw 700ms ease-out 320ms both;
-  will-change: transform, opacity;
-}
-
 @keyframes rule-draw {
   from { transform: scaleX(0); opacity: 0; }
   to   { transform: scaleX(1); opacity: 1; }
 }
 
-.hero__rule-dot {
-  display: inline-block;
-  color: #c0392b;
-  font-size: 11px;
-  line-height: 1;
-  opacity: 0.8;
-  animation: dot-pop 500ms cubic-bezier(0.34,1.56,0.64,1) 380ms both;
+@keyframes rule-line-flow {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.hero__rule-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    #d4c4b0 0%,
+    #d4c4b0 35%,
+    #f2e4cc 50%,
+    #fff8ec 54%,
+    #f2e4cc 58%,
+    #d4c4b0 65%,
+    #d4c4b0 100%
+  );
+  background-size: 300% 100%;
+  background-position: 200% center;
+  transform-origin: center;
+  animation:
+    rule-draw 700ms ease-out 320ms both,
+    rule-line-flow 4s ease-in-out 1.8s infinite;
   will-change: transform, opacity;
 }
 
@@ -4411,7 +4455,34 @@ textarea:not(.auth-form *):focus {
   to   { transform: scale(1) rotate(0deg); opacity: 0.8; }
 }
 
-/* Description — fade in with blur-to-sharp */
+@keyframes rule-dot-breathe {
+  0%, 100% { transform: scale(1)    rotate(0deg);  opacity: 0.7; }
+  50%       { transform: scale(1.4) rotate(45deg); opacity: 1;   }
+}
+
+.hero__rule-dot {
+  display: inline-block;
+  color: #c0392b;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.8;
+  animation:
+    dot-pop 500ms cubic-bezier(0.34,1.56,0.64,1) 380ms both,
+    rule-dot-breathe 4s ease-in-out 1.5s infinite;
+  will-change: transform, opacity;
+}
+
+/* Description — fade in with blur-to-sharp, then subtle opacity breath */
+@keyframes hero-desc-in {
+  from { opacity: 0; transform: translateY(8px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0px); }
+}
+
+@keyframes desc-breathe {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.78; }
+}
+
 .hero__desc {
   max-width: 540px;
   margin: 0 0 28px;
@@ -4420,13 +4491,10 @@ textarea:not(.auth-form *):focus {
   font-size: clamp(16px, 1.1vw, 18px);
   line-height: 1.55;
   font-weight: 400;
-  animation: hero-desc-in 800ms ease-out 380ms both;
+  animation:
+    hero-desc-in 800ms ease-out 380ms both,
+    desc-breathe 7s ease-in-out 2s infinite;
   will-change: transform, opacity, filter;
-}
-
-@keyframes hero-desc-in {
-  from { opacity: 0; transform: translateY(8px); filter: blur(3px); }
-  to   { opacity: 1; transform: translateY(0);   filter: blur(0px); }
 }
 
 /* Base enter (used by search + actions) */
