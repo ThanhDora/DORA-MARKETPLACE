@@ -5542,10 +5542,11 @@ header::before,
   100% { background-position: -50% center; }
 }
 
-.ldb-row__bar span {
+/* Bar inner — React-driven width with smooth transition */
+.ldb-row__bar-inner {
   display: block;
   height: 100%;
-  width: var(--sold-pct, 50%);
+  width: 0;
   border-radius: 2px;
   background: linear-gradient(
     90deg,
@@ -5559,13 +5560,36 @@ header::before,
   );
   background-size: 250% 100%;
   background-position: 150% center;
-  animation:
-    ldb-bar-grow 800ms calc(var(--row-i, 0) * 60ms + 300ms) cubic-bezier(0.34,1.2,0.64,1) both,
-    ldb-bar-shine 2.2s calc(var(--row-i, 0) * 150ms + 1.4s) linear infinite;
+  transition: width 700ms cubic-bezier(0.34, 1.2, 0.64, 1);
+  animation: ldb-bar-shine 2.2s calc(var(--row-i, 0) * 150ms + 1.4s) linear infinite;
 }
 
-.ldb-row--1 .ldb-row__bar span {
+.ldb-row--1 .ldb-row__bar-inner {
   box-shadow: 0 0 8px rgba(217,119,87,0.4);
+}
+
+/* Flash animation when row data updates */
+@keyframes ldb-row-flash {
+  0%   { background: rgba(217,119,87,0); }
+  25%  { background: rgba(217,119,87,0.12); }
+  100% { background: rgba(217,119,87,0); }
+}
+
+.ldb-row--flash {
+  animation: ldb-row-flash 900ms ease-out !important;
+}
+
+/* Score flash when number changes */
+@keyframes ldb-score-pop {
+  0%   { transform: scale(1);    color: #141413; }
+  30%  { transform: scale(1.22); color: #d97757; }
+  60%  { transform: scale(1.08); color: #e8a847; }
+  100% { transform: scale(1);    color: inherit; }
+}
+
+.ldb-score--flash {
+  animation: ldb-score-pop 800ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  display: inline-block;
 }
 
 /* Score */

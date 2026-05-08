@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, CreditCard, ShieldCheck, TrendingUp } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { useRealtime } from "@/components/RealtimeProvider";
@@ -17,6 +17,114 @@ import {
 type RealtimeHomeProductSectionsProps = {
   initialProducts: StoreProduct[];
 };
+
+/* ── Animated counting number ── */
+function useAnimatedNumber(value: number, duration = 650) {
+  const [display, setDisplay] = useState(value);
+  const raf = useRef(0);
+  const prev = useRef(value);
+
+  useEffect(() => {
+    if (prev.current === value) return;
+    const from = prev.current;
+    prev.current = value;
+    const start = performance.now();
+    cancelAnimationFrame(raf.current);
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - (1 - t) ** 3;
+      setDisplay(Math.round(from + (value - from) * ease));
+      if (t < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [value, duration]);
+
+  return display;
+}
+
+/* ── Flash on value change ── */
+function useFlash(value: number) {
+  const [active, setActive] = useState(false);
+  const prev = useRef(value);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    if (prev.current !== value) {
+      prev.current = value;
+      setActive(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setActive(false), 900);
+    }
+    return () => clearTimeout(timer.current);
+  }, [value]);
+  return active;
+}
+
+/* ── Single leaderboard row with smooth transitions ── */
+function LdbRow({
+  product, index, peakSold,
+}: {
+  product: StoreProduct; index: number; peakSold: number;
+}) {
+  const soldLevel = Math.min(100, Math.max(4, Math.round((product.soldCount / peakSold) * 100)));
+  const [barWidth, setBarWidth] = useState(0);
+  const flash = useFlash(product.soldCount);
+  const animatedScore = useAnimatedNumber(product.soldCount);
+  const rankMedal = ["🥇", "🥈", "🥉"][index] ?? null;
+  const isChamp = index === 0;
+
+  /* initial bar grow + smooth update */
+  useEffect(() => {
+    const t = setTimeout(() => setBarWidth(soldLevel), index * 60 + 120);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setBarWidth(soldLevel);
+  }, [soldLevel]);
+
+  let statusVariant = "";
+  if (product.status === "APPROVED") statusVariant = "success";
+
+  return (
+    <Link
+      href={`/products/${isNumericId(product.id) ? product.id : product.slug}`}
+      className={`ldb-row ldb-row--${index + 1}${flash ? " ldb-row--flash" : ""}`}
+      style={{ "--row-i": index } as CSSProperties}
+    >
+      <span className="ldb-row__rank" aria-label={`Hạng ${index + 1}`}>
+        {rankMedal ?? <span>{index + 1}</span>}
+      </span>
+      <span className="ldb-row__visual" aria-hidden="true">
+        {product.images[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={product.images[0]} alt=""
+            loading={index < 2 ? "eager" : "lazy"}
+            decoding="async"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        ) : (
+          <span className="ldb-row__type-badge">{product.type.slice(0, 3)}</span>
+        )}
+      </span>
+      <span className="ldb-row__body">
+        <strong>{product.name}</strong>
+        <small>{product.type} · {product.sellerName ?? "Dora"}</small>
+        <span className="ldb-row__bar" aria-hidden="true">
+          <span
+            className="ldb-row__bar-inner"
+            style={{ width: `${barWidth}%` }}
+          />
+        </span>
+      </span>
+      <span className={`ldb-row__score${isChamp ? " ldb-row__score--champ" : ""}`}>
+        <b className={flash ? "ldb-score--flash" : ""}>{animatedScore}</b>
+        <small>lượt mua</small>
+      </span>
+    </Link>
+  );
+}
 
 function getProductHref(product: StoreProduct) {
   return `/products/${isNumericId(product.id) ? product.id : product.slug}`;
@@ -56,8 +164,11 @@ function useHomeProducts(initialProducts: StoreProduct[]) {
 export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProductSectionsProps) {
   const liveProducts = useHomeProducts(initialProducts);
   const topSellingProducts = useMemo(() => sortProductsForLeaderboard(liveProducts).slice(0, 5), [liveProducts]);
-  const totalSold = topSellingProducts.reduce((total, product) => total + product.soldCount, 0);
-  const peakSold = Math.max(...topSellingProducts.map((product) => product.soldCount), 1);
+  const totalSold = topSellingProducts.reduce((s, p) => s + p.soldCount, 0);
+  const peakSold = Math.max(...topSellingProducts.map((p) => p.soldCount), 1);
+
+  const animatedTotal = useAnimatedNumber(totalSold || 120);
+  const animatedPeak  = useAnimatedNumber(peakSold);
 
   return (
     <div className="ldb-panel" aria-label="Bảng xếp hạng sản phẩm bán chạy nhất">
@@ -83,14 +194,14 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
         <div className="ldb-stat">
           <Activity size={13} aria-hidden="true" />
           <div>
-            <b>{totalSold || 120}</b>
+            <b>{animatedTotal}</b>
             <small>lượt mua</small>
           </div>
         </div>
         <div className="ldb-stat">
           <TrendingUp size={13} aria-hidden="true" />
           <div>
-            <b>{peakSold}</b>
+            <b>{animatedPeak}</b>
             <small>cao nhất</small>
           </div>
         </div>
@@ -98,48 +209,9 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
 
       {/* Leaderboard rows */}
       <div className="ldb-list">
-        {topSellingProducts.map((product, index) => {
-          const soldLevel = Math.min(100, Math.max(8, Math.round((product.soldCount / peakSold) * 100)));
-          const rankMedal = ["🥇", "🥈", "🥉"][index] ?? null;
-          return (
-            <Link
-              key={product.id}
-              href={getProductHref(product)}
-              className={`ldb-row ldb-row--${index + 1}`}
-              style={{
-                "--sold-pct": `${soldLevel}%`,
-                "--row-i": index,
-              } as CSSProperties}
-            >
-              <span className="ldb-row__rank" aria-label={`Hạng ${index + 1}`}>
-                {rankMedal ?? <span>{index + 1}</span>}
-              </span>
-              <span className="ldb-row__visual" aria-hidden="true">
-                {product.images[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.images[0]}
-                    alt=""
-                    loading={index < 2 ? "eager" : "lazy"}
-                    decoding="async"
-                    onError={(e) => { e.currentTarget.src = ""; e.currentTarget.style.display = "none"; }}
-                  />
-                ) : (
-                  <span className="ldb-row__type-badge">{product.type.slice(0, 3)}</span>
-                )}
-              </span>
-              <span className="ldb-row__body">
-                <strong>{product.name}</strong>
-                <small>{product.type} · {product.sellerName ?? "Dora"}</small>
-                <span className="ldb-row__bar" aria-hidden="true"><span /></span>
-              </span>
-              <span className="ldb-row__score">
-                <b>{product.soldCount}</b>
-                <small>lượt mua</small>
-              </span>
-            </Link>
-          );
-        })}
+        {topSellingProducts.map((product, index) => (
+          <LdbRow key={product.id} product={product} index={index} peakSold={peakSold} />
+        ))}
       </div>
 
       {/* Footer */}
