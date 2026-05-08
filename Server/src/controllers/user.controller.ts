@@ -213,3 +213,43 @@ export const markAllNotificationsRead = async (req: Request, res: Response) => {
   });
   sendSuccess(res, null, 'Đánh dấu tất cả đã đọc thành công');
 };
+
+export const getPublicProducts = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (isNaN(id) || id <= 0) throw ApiError.badRequest('ID người dùng không hợp lệ');
+
+  const { page = '1', limit = '12', type } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
+
+  const where: any = { sellerId: id, status: 'APPROVED' };
+  if (type && ['ACCOUNT', 'KEY', 'FILE'].includes(String(type))) {
+    where.type = String(type);
+  }
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        seller: { select: { id: true, name: true } },
+        _count: { select: { reviews: true } },
+      },
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  const productIds = products.map((p) => p.id);
+  const ratingAggregates = await prisma.review.groupBy({
+    by: ['productId'],
+    where: { productId: { in: productIds } },
+    _avg: { rating: true },
+  });
+  const ratingMap = new Map(ratingAggregates.map((r) => [r.productId, Number(r._avg.rating) || 0]));
+  const result = products.map((p) => ({ ...p, averageRating: ratingMap.get(p.id) ?? 0 }));
+
+  sendList(res, result, { page: Number(page), limit: Number(limit), total });
+};

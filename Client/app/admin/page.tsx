@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
+  API_BASE_URL,
   formatCurrency,
   normalizeProduct,
   statusLabel,
@@ -34,6 +35,18 @@ import {
   type StoreProduct,
   type User,
 } from "@/lib/api";
+
+function resolveAvatar(value?: string | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^(https?:|blob:|data:)/i.test(raw)) return raw;
+  try {
+    const origin = new URL(API_BASE_URL).origin;
+    if (raw.startsWith("/api/")) return `${origin}${raw}`;
+    if (raw.startsWith("/uploads/")) return `${origin}/api${raw}`;
+  } catch {}
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ToastProvider";
 
@@ -141,6 +154,27 @@ function roleLabel(role: Role) {
   if (role === "ADMIN") return "Admin";
   if (role === "SELLER") return "Seller";
   return "Người dùng";
+}
+
+function AdminAvatar({ name, avatar }: { name?: string | null; avatar?: string | null }) {
+  const [imgErr, setImgErr] = useState(false);
+  const src = imgErr ? null : resolveAvatar(avatar);
+  const initials = (name || "U").split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div className="admin-user-card__avatar">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={name ?? ""}
+          className="admin-user-card__avatar-img"
+          onError={() => setImgErr(true)}
+        />
+      ) : (
+        initials
+      )}
+    </div>
+  );
 }
 
 export default function AdminPage() {
@@ -824,11 +858,11 @@ export default function AdminPage() {
                   const isSuspendBusy = Boolean(busyMap[`suspend-${item.id}`]);
                   const isDeleting = Boolean(busyMap[`delete-user-${item.id}`]);
                   const currentPlan = item.subscription?.[0]?.plan;
-                  const initials = (item.name || item.email || "U").slice(0, 2).toUpperCase();
                   const isLocked = item.isActive === false;
                   return (
                     <article key={item.id} className="admin-user-card">
-                      <div className="admin-user-card__avatar">{initials}</div>
+                      <AdminAvatar name={item.name || item.email} avatar={item.avatar} />
+
                       <div className="admin-user-card__body">
                         <div className="admin-user-card__head">
                           <div className="admin-user-card__identity">

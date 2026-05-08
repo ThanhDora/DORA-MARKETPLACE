@@ -177,6 +177,7 @@ export const getUsers = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
+        avatar: true,
         phone: true,
         bio: true,
         address: true,

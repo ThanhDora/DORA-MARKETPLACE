@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { BadgeCheck, Download, Eye, MessageSquare, ShieldCheck, Star, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProductPurchasePanel } from "@/components/ProductPurchasePanel";
+import { SellerCard } from "@/components/SellerCard";
 import { useAuth } from "@/components/AuthProvider";
 import { useRealtime } from "@/components/RealtimeProvider";
 import { useToast } from "@/components/ToastProvider";
@@ -284,7 +285,7 @@ export function ProductDetailClient({
   }, [apiFetch, isNumericProductId, productId]);
 
   useEffect(() => {
-    if (!isNumericProductId || reviewVersion === 0) return;
+    if (!isNumericProductId) return;
     loadReviews();
   }, [isNumericProductId, loadReviews, reviewVersion]);
 
@@ -398,13 +399,21 @@ export function ProductDetailClient({
           </div>
         </div>
 
+        {/* Seller card */}
+        {currentProduct.sellerId && isNumericId(String(currentProduct.sellerId)) && (
+          <SellerCard
+            sellerId={Number(currentProduct.sellerId)}
+            sellerName={currentProduct.sellerName ?? "Người bán"}
+          />
+        )}
+
         {/* Trust block */}
         <div className="pd-trust">
           <div className="pd-trust__item">
             <BadgeCheck size={18} className="pd-trust__icon" />
             <div>
-              <p className="pd-trust__title">Người bán xác thực</p>
-              <p className="pd-trust__desc">{currentProduct.sellerName ?? "Người bán"} đăng sản phẩm qua quy trình duyệt của hệ thống.</p>
+              <p className="pd-trust__title">Sản phẩm xác thực</p>
+              <p className="pd-trust__desc">Mọi sản phẩm được kiểm duyệt trước khi đăng bán trên hệ thống.</p>
             </div>
           </div>
           <div className="pd-trust__item">
@@ -434,10 +443,6 @@ export function ProductDetailClient({
             <div className="pd-spec__row">
               <dt>Danh mục</dt>
               <dd>{currentProduct.categoryName ?? "Chưa phân loại"}</dd>
-            </div>
-            <div className="pd-spec__row">
-              <dt>Người bán</dt>
-              <dd>{currentProduct.sellerName ?? "Marketplace"}</dd>
             </div>
             <div className="pd-spec__row">
               <dt>Tồn kho</dt>

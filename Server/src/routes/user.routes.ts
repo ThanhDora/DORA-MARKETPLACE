@@ -17,4 +17,7 @@ router.get('/me/notifications', isAuthenticated, validateQuery(notificationQuery
 router.patch('/me/notifications/:id/read', isAuthenticated, validateParams(notificationIdParamSchema), asyncHandler(userController.markNotificationRead));
 router.patch('/me/notifications/read-all', isAuthenticated, asyncHandler(userController.markAllNotificationsRead));
 
+router.get('/:id', asyncHandler(userController.getProfile));
+router.get('/:id/products', asyncHandler(userController.getPublicProducts));
+
 export default router;
