@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BarChart3, CreditCard, ImagePlus, PackageOpen, PackagePlus, Pencil, ReceiptText, Search, SlidersHorizontal, Trash2, Wallet, X } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronLeft, ChevronRight, CreditCard, ImagePlus, PackageOpen, PackagePlus, Pencil, ReceiptText, Search, SlidersHorizontal, Trash2, Wallet, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   formatCurrency,
@@ -100,6 +100,8 @@ export default function SellerPage() {
   const firstCategoryId = categories[0]?.id ? String(categories[0].id) : "";
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price" | "stock" | "status">("name");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -143,6 +145,10 @@ export default function SellerPage() {
     loadSellerData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, canSell]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, sortBy]);
 
   useEffect(() => {
     setExistingImages(editingProduct?.images ?? []);
@@ -208,7 +214,7 @@ export default function SellerPage() {
     try {
       const [productsRes, categoriesRes, ordersRes, payoutsRes, configsRes, statsRes, plansRes, subRes] =
         await Promise.allSettled([
-          apiFetch<ApiList<BackendProduct>>("/seller/products"),
+          apiFetch<ApiList<BackendProduct>>("/seller/products?limit=500"),
           apiFetch<ApiList<Category>>("/categories?limit=100&isActive=true"),
           apiFetch<ApiList<Order>>("/seller/orders?limit=20"),
           apiFetch<ApiList<Payout>>("/seller/payouts?limit=20"),
@@ -553,9 +559,13 @@ export default function SellerPage() {
                   </select>
                 </div>
 
-                {filteredProducts.length ? (
+                {filteredProducts.length ? (() => {
+                  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+                  const pageProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+                  return (
+                  <>
                   <div className="seller-product-list">
-                    {filteredProducts.map((product, index) => {
+                    {pageProducts.map((product, index) => {
                       const stockPct = product.stock <= 0 ? 0 : Math.min(100, Math.max(10, (product.stock / 50) * 100));
                       const stockBarClass =
                         product.stock <= 0
@@ -621,7 +631,54 @@ export default function SellerPage() {
                       );
                     })}
                   </div>
-                ) : (
+                  {totalPages > 1 && (
+                    <div className="seller-pagination">
+                      <button
+                        type="button"
+                        className="seller-pagination__btn"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        aria-label="Trang trước"
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                        .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                          if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                          acc.push(p);
+                          return acc;
+                        }, [])
+                        .map((item, i) =>
+                          item === "…" ? (
+                            <span key={`ellipsis-${i}`} className="seller-pagination__ellipsis">…</span>
+                          ) : (
+                            <button
+                              key={item}
+                              type="button"
+                              className={`seller-pagination__btn${item === page ? " is-active" : ""}`}
+                              onClick={() => setPage(item as number)}
+                            >
+                              {item}
+                            </button>
+                          )
+                        )}
+                      <button
+                        type="button"
+                        className="seller-pagination__btn"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        aria-label="Trang tiếp"
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                      <span className="seller-pagination__info">
+                        {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredProducts.length)} / {filteredProducts.length}
+                      </span>
+                    </div>
+                  )}
+                  </>);
+                })() : (
                   <div className="seller-product-empty">
                     <span className="seller-product-empty__icon">
                       <Search size={24} />

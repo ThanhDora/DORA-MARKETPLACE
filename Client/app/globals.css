@@ -6429,6 +6429,104 @@ header::before,
   border-radius: 8px !important;
 }
 
+.seller-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #ece8e0;
+}
+
+.seller-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1px solid #e3dacc;
+  background: transparent;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5e5d59;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.seller-pagination__btn:hover:not(:disabled) {
+  background: #f0ede6;
+  border-color: #c8bfb0;
+  color: #141413;
+}
+
+.seller-pagination__btn.is-active {
+  background: #141413;
+  border-color: #141413;
+  color: #faf9f5;
+  font-weight: 700;
+  cursor: default;
+}
+
+.seller-pagination__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.seller-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  font-size: 13px;
+  color: #b0aea5;
+  user-select: none;
+}
+
+.seller-pagination__info {
+  margin-left: 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #a09f98;
+  white-space: nowrap;
+}
+
+.seller-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #e3dacc;
+  background: transparent;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5e5d59;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.seller-load-more:hover {
+  background: #f0ede6;
+  border-color: #c8bfb0;
+  color: #141413;
+}
+
+.seller-load-more__done {
+  margin-top: 10px;
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #b0aea5;
+}
+
 .site-header .notification-popover {
   right: 0 !important;
   top: calc(100% + 8px) !important;
