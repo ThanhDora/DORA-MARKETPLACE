@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BadgeCheck, Download, Eye, MessageSquare, ShieldCheck, Star, Zap } from "lucide-react";
+import {
+  BadgeCheck,
+  Download,
+  Eye,
+  FileText,
+  Fingerprint,
+  Key,
+  Layers,
+  MessageSquare,
+  ShieldCheck,
+  Star,
+  Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProductPurchasePanel } from "@/components/ProductPurchasePanel";
 import { SellerCard } from "@/components/SellerCard";
@@ -12,6 +24,7 @@ import { useToast } from "@/components/ToastProvider";
 import {
   isNumericId,
   productTypeLabel,
+  statusLabel,
   type ApiEnvelope,
   type Review,
   type ReviewListData,
@@ -372,12 +385,49 @@ export function ProductDetailClient({
         {/* Gallery */}
         <ProductGallery product={currentProduct} />
 
+        {/* Editorial Atelier Strip */}
+        <div className="pd-atelier-strip">
+          <div className="pd-atelier-item">
+            <Layers size={14} strokeWidth={1.8} className="pd-atelier-icon" />
+            <div className="pd-atelier-text">
+              <span className="pd-atelier-label">Thể loại</span>
+              <Link
+                href={`/catalog?type=${currentProduct.type}`}
+                className="pd-atelier-value pd-atelier-link"
+              >
+                {productTypeLabel(currentProduct.type)}
+              </Link>
+            </div>
+          </div>
+          <div className="pd-atelier-item">
+            <Key size={14} strokeWidth={1.8} className="pd-atelier-icon" />
+            <div className="pd-atelier-text">
+              <span className="pd-atelier-label">Danh mục</span>
+              <Link
+                href={`/catalog?categoryId=${currentProduct.categoryId ?? ""}`}
+                className="pd-atelier-value pd-atelier-link"
+              >
+                {currentProduct.categoryName ?? "Toàn bộ"}
+              </Link>
+            </div>
+          </div>
+          <div className="pd-atelier-item">
+            <ShieldCheck size={14} strokeWidth={1.8} className="pd-atelier-icon" />
+            <div className="pd-atelier-text">
+              <span className="pd-atelier-label">Bảo chứng</span>
+              <div
+                className={`pd-atelier-value pd-atelier-certificate ${currentProduct.status !== "APPROVED" ? "pd-atelier-status--pending" : ""
+                  }`}
+              >
+                <BadgeCheck size={13} strokeWidth={2} />
+                {statusLabel(currentProduct.status)}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Title + meta */}
         <div className="pd-info">
-          <p className="pd-info__eyebrow">
-            <span className="pd-info__type-badge">{productTypeLabel(currentProduct.type)}</span>
-            <span className="pd-info__status-badge">{currentProduct.status === "APPROVED" ? "Đã duyệt" : currentProduct.status}</span>
-          </p>
           <h1 className="pd-info__title">{currentProduct.name}</h1>
           <p className="pd-info__desc">{currentProduct.description}</p>
 
@@ -434,27 +484,43 @@ export function ProductDetailClient({
 
         {/* Spec table */}
         <div className="pd-spec">
-          <p className="pd-spec__label">Thông tin sản phẩm</p>
+          <p className="pd-spec__label">Thông số kỹ thuật</p>
           <dl className="pd-spec__dl">
             <div className="pd-spec__row">
-              <dt>Loại</dt>
-              <dd>{productTypeLabel(currentProduct.type)}</dd>
-            </div>
-            <div className="pd-spec__row">
-              <dt>Danh mục</dt>
-              <dd>{currentProduct.categoryName ?? "Chưa phân loại"}</dd>
-            </div>
-            <div className="pd-spec__row">
-              <dt>Tồn kho</dt>
+              <dt>Tình trạng kho</dt>
               <dd className={currentStock > 0 ? "pd-spec__stock--live" : "pd-spec__stock--out"}>
-                {currentStock > 0 ? `${currentStock} sản phẩm` : "Hết hàng"}
+                {currentStock > 0 ? `Còn ${currentStock} sản phẩm` : "Đã hết hàng"}
               </dd>
             </div>
+            {Object.entries(currentProduct.metadata || {}).map(([key, value]) => {
+              if (typeof value === "string" || typeof value === "number") {
+                const labelMap: Record<string, string> = {
+                  delivery: "Giao hàng",
+                  warranty: "Bảo hành",
+                  badge: "Nhãn",
+                  version: "Phiên bản",
+                  region: "Khu vực",
+                  platform: "Nền tảng",
+                };
+                return (
+                  <div className="pd-spec__row" key={key}>
+                    <dt>{labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1)}</dt>
+                    <dd>{String(value)}</dd>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </dl>
         </div>
 
-        {/* Reviews */}
-        <div className="pd-reviews">
+      </div>
+
+      {/* ── Right: purchase panel ── */}
+      <ProductPurchasePanel product={{ ...currentProduct, stock: currentStock }} />
+
+      {/* ── Reviews (full-width on desktop, bottom on mobile) ── */}
+      <div className="pd-reviews pd-reviews--standalone">
           <div className="pd-reviews__head">
             <div>
               <p className="pd-spec__label">Đánh giá</p>
@@ -522,7 +588,6 @@ export function ProductDetailClient({
                   return (
                     <article key={review.id} className="pd-review-item">
                       <div className="pd-review-item__top">
-                        {/* Avatar */}
                         <div className="pd-review-item__avatar">
                           {avatar ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -531,13 +596,11 @@ export function ProductDetailClient({
                             <span className="pd-review-item__avatar-initials">{initials}</span>
                           )}
                         </div>
-
-                        {/* Name + rating + content */}
                         <div className="pd-review-item__body">
                           <div className="pd-review-item__header">
                             <strong className="pd-review-item__name">{name}</strong>
                             <span className="pd-review-item__rating">
-                              {[1,2,3,4,5].map((s) => (
+                              {[1, 2, 3, 4, 5].map((s) => (
                                 <Star
                                   key={s}
                                   size={11}
@@ -573,11 +636,7 @@ export function ProductDetailClient({
           ) : (
             <p className="pd-reviews__empty">Chưa có đánh giá. Hãy là người đầu tiên.</p>
           )}
-        </div>
       </div>
-
-      {/* ── Right: purchase panel ── */}
-      <ProductPurchasePanel product={{ ...currentProduct, stock: currentStock }} />
     </div>
   );
 }

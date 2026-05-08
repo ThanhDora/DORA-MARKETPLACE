@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CatalogPagination } from "@/components/CatalogPagination";
 import { RealtimeCatalogGrid } from "@/components/RealtimeCatalogGrid";
 import { SearchInput } from "@/components/SearchInput";
 import { getCategories, getProducts } from "@/lib/api";
@@ -101,58 +102,61 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       </section>
 
       {/* ── Filter strip ── */}
-      <div className="catalog-v2__filters px-inline">
-        <div className="catalog-v2__filter-row">
-          <span className="catalog-v2__filter-label">Loại</span>
-          <div className="catalog-v2__pill-group">
-            {TYPE_FILTERS.map(({ label, value }) => {
-              const isActive = selectedType === value || (!selectedType && value === undefined);
-              return (
+      <section className="catalog-v2__filters px-inline">
+        <div className="catalog-v2__filters-rail">
+          <div className="catalog-v2__filter-grid">
+            <div className="catalog-v2__filter-row">
+              <span className="catalog-v2__filter-label">Loại</span>
+              <div className="catalog-v2__pill-group">
+                {TYPE_FILTERS.map(({ label, value }) => {
+                  const isActive = selectedType === value || (!selectedType && value === undefined);
+                  return (
+                    <Link
+                      key={label}
+                      href={buildCatalogHref(params?.search, selectedCategoryId, value)}
+                      className={`catalog-v2__pill${isActive ? " is-active" : ""}`}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="catalog-v2__filter-row">
+              <span className="catalog-v2__filter-label">Danh mục</span>
+              <div className="catalog-v2__pill-group catalog-v2__pill-group--scroll">
                 <Link
-                  key={label}
-                  href={buildCatalogHref(params?.search, selectedCategoryId, value)}
-                  className={`catalog-v2__pill${isActive ? " is-active" : ""}`}
+                  href={buildCatalogHref(params?.search, undefined, selectedType)}
+                  className={`catalog-v2__pill${!selectedCategoryId ? " is-active" : ""}`}
                 >
-                  {label}
+                  Tất cả
                 </Link>
-              );
-            })}
+                {categories.slice(0, 10).map((cat) => {
+                  const isActive = selectedCategoryId === String(cat.id);
+                  return (
+                    <Link
+                      key={cat.id}
+                      href={buildCatalogHref(params?.search, String(cat.id), selectedType)}
+                      className={`catalog-v2__pill${isActive ? " is-active" : ""}`}
+                    >
+                      {cat.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="catalog-v2__toolbar">
+            <p className="catalog-v2__result-count">
+              <strong>{totalResults}</strong> kết quả
+              {params?.search ? <> cho <em>&ldquo;{params.search}&rdquo;</em></> : <span>trong toàn bộ catalog</span>}
+            </p>
+            {isFallback ? <span className="catalog-v2__fallback-badge">Demo</span> : null}
           </div>
         </div>
-
-        <div className="catalog-v2__filter-row">
-          <span className="catalog-v2__filter-label">Danh mục</span>
-          <div className="catalog-v2__pill-group catalog-v2__pill-group--scroll">
-            <Link
-              href={buildCatalogHref(params?.search, undefined, selectedType)}
-              className={`catalog-v2__pill${!selectedCategoryId ? " is-active" : ""}`}
-            >
-              Tất cả
-            </Link>
-            {categories.slice(0, 10).map((cat) => {
-              const isActive = selectedCategoryId === String(cat.id);
-              return (
-                <Link
-                  key={cat.id}
-                  href={buildCatalogHref(params?.search, String(cat.id), selectedType)}
-                  className={`catalog-v2__pill${isActive ? " is-active" : ""}`}
-                >
-                  {cat.name}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Toolbar ── */}
-      <div className="catalog-v2__toolbar px-inline">
-        <p className="catalog-v2__result-count">
-          <strong>{totalResults}</strong> kết quả
-          {params?.search ? <> cho <em>&ldquo;{params.search}&rdquo;</em></> : null}
-        </p>
-        {isFallback ? <span className="catalog-v2__fallback-badge">Demo</span> : null}
-      </div>
+      </section>
 
       {/* ── Product grid ── */}
       <section className="catalog-v2__products px-inline">
@@ -170,39 +174,14 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             />
 
             {totalResults >= PRODUCTS_PER_PAGE && totalPages > 1 ? (
-              <nav aria-label="Phân trang" className="catalog-v2__pagination">
-                <Link
-                  href={buildCatalogPageHref({ search: params?.search, categoryId: selectedCategoryId, type: selectedType, page: Math.max(1, activePage - 1) })}
-                  aria-disabled={activePage <= 1}
-                  className={`catalog-v2__page-btn${activePage <= 1 ? " is-disabled" : ""}`}
-                >
-                  ← Trước
-                </Link>
-
-                {paginationItems.map((pageNumber, index) => {
-                  const showGap = index > 0 && paginationItems[index - 1] !== pageNumber - 1;
-                  return (
-                    <div key={pageNumber} className="contents">
-                      {showGap ? <span className="catalog-v2__page-gap">…</span> : null}
-                      <Link
-                        href={buildCatalogPageHref({ search: params?.search, categoryId: selectedCategoryId, type: selectedType, page: pageNumber })}
-                        aria-current={pageNumber === activePage ? "page" : undefined}
-                        className={`catalog-v2__page-btn${pageNumber === activePage ? " is-active" : ""}`}
-                      >
-                        {pageNumber}
-                      </Link>
-                    </div>
-                  );
-                })}
-
-                <Link
-                  href={buildCatalogPageHref({ search: params?.search, categoryId: selectedCategoryId, type: selectedType, page: Math.min(totalPages, activePage + 1) })}
-                  aria-disabled={activePage >= totalPages}
-                  className={`catalog-v2__page-btn${activePage >= totalPages ? " is-disabled" : ""}`}
-                >
-                  Sau →
-                </Link>
-              </nav>
+              <CatalogPagination
+                activePage={activePage}
+                totalPages={totalPages}
+                paginationItems={paginationItems}
+                search={params?.search}
+                categoryId={selectedCategoryId}
+                type={selectedType}
+              />
             ) : null}
           </>
         ) : (

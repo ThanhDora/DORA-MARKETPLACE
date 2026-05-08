@@ -47,7 +47,7 @@ export function FilterPanel({ categories, selectedType, selectedCategoryId, curr
       <div className="grid gap-4">
         <div>
           <span className="block mb-2.5 text-secondary text-[12px] font-extrabold uppercase">Loại sản phẩm</span>
-          <div className="flex gap-2.5 flex-wrap grid items-stretch">
+          <div className="flex gap-2.5 flex-wrap items-stretch">
             {typeFilters.map((filter) => (
               <Link
                 key={filter.label}
@@ -65,7 +65,7 @@ export function FilterPanel({ categories, selectedType, selectedCategoryId, curr
         </div>
         <div>
           <span className="block mb-2.5 text-secondary text-[12px] font-extrabold uppercase">Danh mục</span>
-          <div className="flex gap-2.5 flex-wrap grid items-stretch">
+          <div className="flex gap-2.5 flex-wrap items-stretch">
             <Link
               href={hrefForType(selectedType, currentSearch)}
               className={!selectedCategoryId ? activeFilterButtonClass : filterButtonClass}
