@@ -328,7 +328,11 @@ export const deleteProduct = async (req: Request, res: Response) => {
     throw ApiError.forbidden('Bạn không có quyền xóa sản phẩm này');
   }
 
-  await prisma.product.delete({ where: { id } });
+  // Soft delete: giữ lịch sử đơn hàng (OrderItem.productId non-nullable)
+  await prisma.product.update({
+    where: { id },
+    data: { status: 'INACTIVE' },
+  });
   sendSuccess(res, null, 'Xóa sản phẩm thành công');
 };
 
@@ -338,7 +342,10 @@ export const listSellerProducts = async (req: Request, res: Response) => {
   const skip = (Number(page) - 1) * Number(limit);
   const take = Number(limit);
 
-  const where: Prisma.ProductWhereInput = { sellerId: userId };
+  const where: Prisma.ProductWhereInput = {
+    sellerId: userId,
+    status: { not: 'INACTIVE' },
+  };
   if (status) where.status = String(status) as any;
 
   const [products, total] = await Promise.all([
