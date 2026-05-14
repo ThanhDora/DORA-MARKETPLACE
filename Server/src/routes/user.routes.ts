@@ -5,12 +5,14 @@ import { notificationIdParamSchema, notificationQuerySchema, userOrderQuerySchem
 import { asyncHandler } from '../utils/ApiError.js';
 import { isAuthenticated } from '../middleware/auth.middleware.js';
 import { requireMinRole } from '../middleware/rbac.middleware.js';
+import { uploadImage, handleUploadError } from '../middleware/upload.middleware.js';
 import * as userController from '../controllers/user.controller.js';
 
 const router = Router();
 
 router.get('/me', isAuthenticated, asyncHandler(userController.getMyProfile));
 router.put('/me', isAuthenticated, validateBody(updateProfileSchema), asyncHandler(userController.updateProfile));
+router.post('/me/avatar', isAuthenticated, uploadImage.single('avatar'), handleUploadError, asyncHandler(userController.uploadAvatar));
 router.get('/me/orders', isAuthenticated, validateQuery(userOrderQuerySchema), asyncHandler(userController.getMyOrders));
 router.get('/me/seller/orders', isAuthenticated, requireMinRole('SELLER'), validateQuery(userOrderQuerySchema), asyncHandler(userController.getSellerOrders));
 router.get('/me/notifications', isAuthenticated, validateQuery(notificationQuerySchema), asyncHandler(userController.getNotifications));

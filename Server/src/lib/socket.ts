@@ -131,6 +131,38 @@ export const initializeSocket = (server: HttpServer): Server => {
       });
     });
 
+    // ── Support chat ──────────────────────────────────────────────────────
+    // Admin join agent room để nhận new_pending events
+    if (socket.userRole === 'ADMIN') {
+      socket.join('support:agents');
+    }
+
+    socket.on('support:join', async (ticketId: number) => {
+      const ticket = await prisma.supportTicket.findFirst({
+        where: {
+          id: ticketId,
+          OR: [{ userId: socket.userId }, { agentId: socket.userId }],
+        },
+      });
+      const isAdmin = socket.userRole === 'ADMIN';
+      if (!ticket && !isAdmin) {
+        socket.emit('error', { message: 'Unauthorized support room' });
+        return;
+      }
+      socket.join(`support:${ticketId}`);
+    });
+
+    socket.on('support:leave', (ticketId: number) => {
+      socket.leave(`support:${ticketId}`);
+    });
+
+    socket.on('support:typing', (data: { ticketId: number; isTyping: boolean }) => {
+      socket.to(`support:${data.ticketId}`).emit('support:user_typing', {
+        userId: socket.userId,
+        isTyping: data.isTyping,
+      });
+    });
+
     socket.on('disconnect', () => {
       logger.info(`User disconnected: ${socket.userId}`);
     });

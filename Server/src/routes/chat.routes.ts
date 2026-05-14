@@ -11,6 +11,7 @@ router.use(isAuthenticated);
 router.get('/rooms', asyncHandler(chatController.getChatRooms));
 router.get('/rooms/:roomId/messages', asyncHandler(chatController.getMessages));
 router.post('/send', asyncHandler(chatController.sendMessage));
+router.get('/seller/inbox', asyncHandler(chatController.getSellerInbox));
 
 router.get('/ai/sessions', asyncHandler(chatController.getAISessions));
 router.get('/ai/sessions/:sessionId/history', asyncHandler(chatController.getAIChatHistory));

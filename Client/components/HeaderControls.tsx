@@ -24,6 +24,7 @@ const navigationId = "primary-navigation";
 const baseNavLinks = [
   { href: "/", label: "Trang chủ" },
   { href: "/catalog", label: "Sản phẩm" },
+  { href: "/support", label: "Hỗ trợ" },
 ];
 
 function notificationItemKey(item: { id?: number; title?: string; type?: string; content?: string }, index: number) {

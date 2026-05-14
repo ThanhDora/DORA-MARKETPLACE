@@ -31,6 +31,7 @@ import walletRoutes from './routes/wallet.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import sellerRoutes from './routes/seller.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import supportRoutes from './routes/support.routes.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -237,6 +238,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/support', supportRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint không tồn tại' });

@@ -29,7 +29,7 @@ export default async function HomePage() {
             <div className="hero__copy">
               <p className="hero__kicker">
                 <span className="hero__kicker-ornament" aria-hidden="true">✦</span>
-                Chợ sản phẩm số &middot; realtime
+                Chợ sản phẩm số &middot; Trực Tuyến
               </p>
               <h1 className="hero__title">
                 <span className="hero__title-em">Marketplace</span>
@@ -56,7 +56,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-          <RealtimeHomeLeaderboard initialProducts={products} />
+            <RealtimeHomeLeaderboard initialProducts={products} />
           </div>
         </section>
 

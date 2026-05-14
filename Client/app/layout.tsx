@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { AppProviders } from "@/components/AppProviders";
+import { ConditionalFooter } from "@/components/ConditionalFooter";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SWRegister } from "@/components/SWRegister";
 import "./globals.css";
@@ -69,7 +69,7 @@ export default function RootLayout({
         <AppProviders>
           <SiteHeader />
           {children}
-          <SiteFooter />
+          <ConditionalFooter />
           <MobileBottomNav />
           <SWRegister />
         </AppProviders>

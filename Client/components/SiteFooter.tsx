@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { Activity, BadgeCheck, ShieldCheck, Zap } from "lucide-react";
 
 const FOOTER_LINKS = [
   {
@@ -37,11 +39,11 @@ const FOOTER_LINKS = [
   },
 ];
 
-const TRUST_BADGES = [
-  { icon: "⚡", label: "Giao nhanh" },
-  { icon: "🔒", label: "Thanh toán bảo mật" },
-  { icon: "✦", label: "Hàng đã duyệt" },
-  { icon: "↻", label: "Realtime tồn kho" },
+const TRUST_BADGES: { icon: ReactNode; label: string }[] = [
+  { icon: <Zap size={13} strokeWidth={2} />, label: "Giao nhanh" },
+  { icon: <ShieldCheck size={13} strokeWidth={2} />, label: "Thanh toán bảo mật" },
+  { icon: <BadgeCheck size={13} strokeWidth={2} />, label: "Hàng đã duyệt" },
+  { icon: <Activity size={13} strokeWidth={2} />, label: "Realtime tồn kho" },
 ];
 
 export function SiteFooter() {

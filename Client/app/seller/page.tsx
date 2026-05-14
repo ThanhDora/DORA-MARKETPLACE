@@ -19,6 +19,8 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ToastProvider";
+import { SellerSupportTab } from "@/components/SellerSupportTab";
+import { SellerMessagesTab } from "@/components/SellerMessagesTab";
 
 type PaymentConfig = {
   id: number;
@@ -53,7 +55,7 @@ type MySubscription = {
   plan: Plan;
 };
 
-const tabs = ["products", "orders", "payouts", "payments", "plans"] as const;
+const tabs = ["products", "orders", "payouts", "payments", "plans", "messages", "support"] as const;
 type Tab = (typeof tabs)[number];
 
 const tabLabels: Record<Tab, string> = {
@@ -62,6 +64,8 @@ const tabLabels: Record<Tab, string> = {
   payouts: "Rút tiền",
   payments: "Thanh toán",
   plans: "Gói bán",
+  messages: "Tin nhắn",
+  support: "Hỗ trợ DORA",
 };
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
@@ -879,6 +883,9 @@ export default function SellerPage() {
           </div>
         </section>
       ) : null}
+
+      {activeTab === "messages" ? <SellerMessagesTab /> : null}
+      {activeTab === "support" ? <SellerSupportTab /> : null}
     </main>
   );
 }

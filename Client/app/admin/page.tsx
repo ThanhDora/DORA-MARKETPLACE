@@ -9,6 +9,7 @@ import {
   Bell,
   Crown,
   Edit3,
+  Headphones,
   Lock,
   LockOpen,
   PackageCheck,
@@ -733,6 +734,13 @@ export default function AdminPage() {
             {tab === "notifications" ? <small>{unreadNotifCount}</small> : null}
           </button>
         ))}
+        <Link
+          href="/admin/support"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-4 py-2 text-[13px] font-bold text-primary transition-all hover:border-tertiary/40 hover:bg-tertiary/5 ml-auto"
+        >
+          <Headphones size={14} />
+          Hỗ trợ khách hàng
+        </Link>
       </div>
 
       {activeTab === "overview" ? (

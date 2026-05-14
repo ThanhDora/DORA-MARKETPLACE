@@ -113,6 +113,9 @@ model User {
   paymentConfigs        SellerPaymentConfig[]
   notifications         Notification[]
   activityLogs          ActivityLog[]
+  supportTickets        SupportTicket[]    @relation("UserTickets")
+  agentTickets          SupportTicket[]    @relation("AgentTickets")
+  supportMessages       SupportMessage[]   @relation("SupportMsgSender")
 
   @@index([email])
   @@index([role])
@@ -470,5 +473,48 @@ model ActivityLog {
 
   @@index([userId])
   @@index([action])
+  @@index([createdAt])
+}
+
+enum SupportTicketStatus {
+  AI
+  PENDING_HUMAN
+  WITH_HUMAN
+  CLOSED
+}
+
+model SupportTicket {
+  id        Int                   @id @default(autoincrement())
+  userId    Int
+  agentId   Int?
+  status    SupportTicketStatus   @default(AI)
+  subject   String                @default("Hỗ trợ khách hàng")
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  user      User             @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+  agent     User?            @relation("AgentTickets", fields: [agentId], references: [id], onDelete: SetNull)
+  messages  SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([agentId])
+  @@index([updatedAt])
+}
+
+model SupportMessage {
+  id        Int           @id @default(autoincrement())
+  ticketId  Int
+  senderId  Int?
+  content   String
+  role      String        @default("user")
+  isRead    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender    User?         @relation("SupportMsgSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId])
+  @@index([senderId])
   @@index([createdAt])
 }

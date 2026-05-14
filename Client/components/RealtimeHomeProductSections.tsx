@@ -168,7 +168,7 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
   const peakSold = Math.max(...topSellingProducts.map((p) => p.soldCount), 1);
 
   const animatedTotal = useAnimatedNumber(totalSold || 120);
-  const animatedPeak  = useAnimatedNumber(peakSold);
+  const animatedPeak = useAnimatedNumber(peakSold);
 
   return (
     <div className="ldb-panel" aria-label="Bảng xếp hạng sản phẩm bán chạy nhất">
@@ -178,11 +178,11 @@ export function RealtimeHomeLeaderboard({ initialProducts }: RealtimeHomeProduct
         <div className="ldb-header__top">
           <span className="ldb-live-badge">
             <span className="ldb-live-dot" aria-hidden="true" />
-            Realtime
+            Trực Tuyến
           </span>
           <TrendingUp size={15} className="ldb-header__icon" aria-hidden="true" />
         </div>
-        <h2 className="ldb-header__title">Bảng<br/>xếp hạng</h2>
+        <h2 className="ldb-header__title">Bảng<br />xếp hạng</h2>
         <p className="ldb-header__sub">Top sản phẩm bán chạy</p>
         <div className="ldb-header__nums" aria-hidden="true">
           <span>01</span><span>02</span><span>03</span>

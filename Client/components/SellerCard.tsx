@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Store, ArrowRight, Package, ShoppingBag } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { ContactSellerChat } from "@/components/ContactSellerChat";
 
 type SellerInfo = {
   id: number;
@@ -16,6 +17,7 @@ type SellerInfo = {
 type Props = {
   sellerId: number;
   sellerName: string;
+  productName?: string;
 };
 
 function initials(name: string) {
@@ -40,7 +42,7 @@ function resolveAvatar(value?: string | null): string | null {
   return raw.startsWith("/") ? raw : `/${raw}`;
 }
 
-export function SellerCard({ sellerId, sellerName }: Props) {
+export function SellerCard({ sellerId, sellerName, productName }: Props) {
   const [seller, setSeller] = useState<SellerInfo | null>(null);
   const [avatarErr, setAvatarErr] = useState(false);
 
@@ -56,6 +58,7 @@ export function SellerCard({ sellerId, sellerName }: Props) {
   const productCount = seller?._count?.products ?? null;
 
   return (
+    <div className="pd-seller-card-wrap">
     <Link href={`/users/${sellerId}`} className="pd-seller-card" prefetch={false}>
       {/* Avatar */}
       <div className="pd-seller-card__avatar">
@@ -103,5 +106,8 @@ export function SellerCard({ sellerId, sellerName }: Props) {
         <ArrowRight size={14} strokeWidth={2} />
       </span>
     </Link>
+
+    <ContactSellerChat sellerId={sellerId} sellerName={sellerName} productName={productName} />
+    </div>
   );
 }

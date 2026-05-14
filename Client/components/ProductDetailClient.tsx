@@ -454,6 +454,7 @@ export function ProductDetailClient({
           <SellerCard
             sellerId={Number(currentProduct.sellerId)}
             sellerName={currentProduct.sellerName ?? "Người bán"}
+            productName={currentProduct.name}
           />
         )}
 

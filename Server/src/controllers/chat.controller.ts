@@ -81,22 +81,87 @@ export const sendMessage = async (req: Request, res: Response) => {
   const userId = (req as any).user.userId;
   const { receiverId, content, roomId } = req.body;
 
+  if (!content?.trim()) throw ApiError.badRequest('Nội dung không được trống');
+  if (!receiverId && !roomId) throw ApiError.badRequest('Thiếu receiverId hoặc roomId');
+
   const messageRoomId = roomId || `dm-${[userId, receiverId].sort().join('-')}`;
 
   const message = await prisma.message.create({
     data: {
       senderId: userId,
-      receiverId,
-      content,
+      receiverId: receiverId ?? null,
+      content: content.trim(),
       roomId: messageRoomId,
     },
     include: {
-      sender: { select: { id: true, name: true, email: true } },
-      receiver: { select: { id: true, name: true, email: true } },
+      sender: { select: { id: true, name: true, email: true, avatar: true } },
+      receiver: { select: { id: true, name: true, email: true, avatar: true } },
     },
   });
 
+  // Phát realtime cho cả room và thông báo đến người nhận
+  const io = (req as any).app.get('io');
+  io?.to(`room:${messageRoomId}`).emit('new_message', message);
+  if (receiverId) {
+    io?.to(`user:${receiverId}`).emit('notification', {
+      type: 'message',
+      from: userId,
+      roomId: messageRoomId,
+      content: content.trim(),
+    });
+  }
+
   sendSuccess(res, message, 'Gửi tin nhắn thành công', 201);
+};
+
+// Seller: lấy danh sách hội thoại DM với buyers
+export const getSellerInbox = async (req: Request, res: Response) => {
+  const sellerId = (req as any).user.userId;
+
+  // Lấy các roomId DM mà seller tham gia
+  const rooms = await prisma.message.findMany({
+    where: {
+      roomId: { startsWith: 'dm-' },
+      OR: [{ senderId: sellerId }, { receiverId: sellerId }],
+    },
+    distinct: ['roomId'],
+    orderBy: { createdAt: 'desc' },
+    select: { roomId: true },
+  });
+
+  if (!rooms.length) {
+    sendSuccess(res, []);
+    return;
+  }
+
+  // Với mỗi room, lấy tin nhắn cuối + thông tin người còn lại
+  const inboxItems = await Promise.all(
+    rooms.map(async ({ roomId }) => {
+      const [lastMsg, unread] = await Promise.all([
+        prisma.message.findFirst({
+          where: { roomId },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            sender: { select: { id: true, name: true, avatar: true } },
+            receiver: { select: { id: true, name: true, avatar: true } },
+          },
+        }),
+        prisma.message.count({
+          where: { roomId, receiverId: sellerId, isRead: false },
+        }),
+      ]);
+
+      if (!lastMsg) return null;
+
+      const other =
+        lastMsg.senderId === sellerId ? lastMsg.receiver : lastMsg.sender;
+
+      return { roomId, lastMessage: lastMsg, otherUser: other, unreadCount: unread };
+    })
+  );
+
+  const filtered = inboxItems.filter(Boolean);
+  sendSuccess(res, filtered);
 };
 
 export const chatWithAI = async (req: Request, res: Response) => {

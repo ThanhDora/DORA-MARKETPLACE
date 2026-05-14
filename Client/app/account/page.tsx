@@ -213,13 +213,13 @@ export default function AccountPage() {
       let avatarUrl: string | undefined;
       if (avatarFile) {
         const formData = new FormData();
-        formData.append("images", avatarFile);
-        const uploadRes = await apiFetch<ApiEnvelope<{ urls: string[] }>>("/products/upload-images", {
+        formData.append("avatar", avatarFile);
+        const uploadRes = await apiFetch<ApiEnvelope<{ url: string }>>("/users/me/avatar", {
           method: "POST",
           body: formData,
           notifySuccess: false,
         });
-        avatarUrl = uploadRes.data?.urls?.[0];
+        avatarUrl = uploadRes.data?.url;
       }
 
       const body: Record<string, unknown> = { name };

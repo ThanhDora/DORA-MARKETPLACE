@@ -3,6 +3,7 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { sendSuccess, sendList } from '../utils/response.js';
 import { ApiError } from '../utils/ApiError.js';
+import { env } from '../config/env.js';
 
 function getAuthenticatedUserId(req: Request): number {
   if (!req.user) {
@@ -66,6 +67,14 @@ export const getMyProfile = async (req: Request, res: Response) => {
   });
 
   sendSuccess(res, user);
+};
+
+export const uploadAvatar = async (req: Request, res: Response) => {
+  const file = req.file;
+  if (!file) throw ApiError.badRequest('Vui lòng chọn ảnh đại diện');
+
+  const url = `${env.BACKEND_URL}/api/uploads/images/${file.filename}`;
+  sendSuccess(res, { url }, 'Tải ảnh thành công');
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
