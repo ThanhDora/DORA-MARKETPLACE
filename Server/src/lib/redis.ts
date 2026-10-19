@@ -5,7 +5,10 @@ let redis: RedisType | null = null;
 
 export const initRedis = (): RedisType | null => {
   try {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    // Redis is optional: without REDIS_URL caching is simply skipped
+    // (e.g. serverless deployments with no Redis attached).
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) return null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const RedisCtor = (IORedis as any).default || IORedis;
     redis = new RedisCtor(redisUrl);

@@ -5,7 +5,11 @@ import winston from 'winston';
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 const LOG_DIR = path.resolve(process.cwd(), 'logs');
 
-fs.mkdirSync(LOG_DIR, { recursive: true });
+try {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+} catch {
+  // Read-only filesystem (e.g. Vercel): file logging is development-only anyway.
+}
 
 const logFormat = printf(({ level, message, timestamp, stack }) => {
   const msg = typeof message === 'object' ? JSON.stringify(message) : message;

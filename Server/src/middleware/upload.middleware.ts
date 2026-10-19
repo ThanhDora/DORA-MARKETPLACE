@@ -4,7 +4,8 @@ import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
+// Serverless platforms only allow writes under /tmp (uploads there are ephemeral).
+const UPLOAD_DIR = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.resolve(process.cwd(), 'uploads');
 const IMAGE_UPLOAD_DIR = path.join(UPLOAD_DIR, 'images');
 const FILE_UPLOAD_DIR = path.join(UPLOAD_DIR, 'files');
 
