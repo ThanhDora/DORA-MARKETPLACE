@@ -179,13 +179,15 @@ app.use(captureActivityLog);
 // Public pages with EJS templates
 app.get('/health', async (req, res) => {
   let dbOk = false, redisOk = false;
+  // Redis is optional; it only counts toward health when REDIS_URL is configured.
+  const redisConfigured = Boolean(process.env.REDIS_URL);
   try { await prisma.$queryRaw`SELECT 1`; dbOk = true; } catch {}
   try { const r = getRedis(); if (r) { await r.ping(); redisOk = true; } } catch {}
-  const allOk = dbOk && redisOk;
+  const allOk = dbOk && (redisOk || !redisConfigured);
   res.status(allOk ? 200 : 503).json({
     status: allOk ? 'ok' : 'degraded',
     db: dbOk,
-    redis: redisOk,
+    redis: redisConfigured ? redisOk : 'not configured',
     timestamp: new Date().toISOString(),
   });
 });

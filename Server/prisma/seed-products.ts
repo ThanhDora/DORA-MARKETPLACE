@@ -76,6 +76,13 @@ async function main() {
       },
   ];
 
+  // Idempotent: skip if the demo seller already has products.
+  const existing = await prisma.product.count({ where: { sellerId: seller.id } });
+  if (existing > 0) {
+    console.log('ℹ️  Demo products already exist (' + existing + '), skipping');
+    return;
+  }
+
   for (const data of productsData) {
     const category = categories.find(c => c.slug === data.categorySlug);
     const slug = data.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(7);
@@ -88,7 +95,6 @@ async function main() {
         price: data.price,
         type: data.type,
         status: ProductStatus.APPROVED,
-        isApproved: true,
         approvedAt: new Date(),
         sellerId: seller.id,
         categoryId: category ? category.id : null,
