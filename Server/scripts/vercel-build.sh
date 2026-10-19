@@ -13,3 +13,6 @@ if [ "${RUN_DB_SEED:-0}" = "1" ]; then
   npx tsx prisma/seed.ts
   npx tsx prisma/seed-products.ts
 fi
+if [ "${RUN_DB_IMAGE_UPDATE:-0}" = "1" ]; then
+  npx tsx prisma/update-demo-images.ts
+fi

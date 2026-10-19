@@ -1,6 +1,7 @@
 import { PrismaClient, ProductType, ProductStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import bcrypt from 'bcryptjs';
+import { DEMO_PRODUCT_IMAGES, DEMO_IMAGE_POOL } from './demo-images';
 
 const prisma = new PrismaClient();
 
@@ -83,7 +84,7 @@ async function main() {
     return;
   }
 
-  for (const data of productsData) {
+  for (const [index, data] of productsData.entries()) {
     const category = categories.find(c => c.slug === data.categorySlug);
     const slug = data.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(7);
 
@@ -99,7 +100,7 @@ async function main() {
         sellerId: seller.id,
         categoryId: category ? category.id : null,
         stock: 100,
-        images: ['https://picsum.photos/seed/' + slug + '/600/400'],
+        images: [DEMO_PRODUCT_IMAGES[data.name] ?? DEMO_IMAGE_POOL[index % DEMO_IMAGE_POOL.length]],
       },
     });
   }
